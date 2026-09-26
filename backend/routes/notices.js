@@ -1,3 +1,0 @@
-const r=require("express").Router(),db=require("../config/db"),{authenticateToken,authorize}=require("../middleware/auth");
-r.get("/",async(q,s)=>{const[a]=await db.query("SELECT * FROM notices "+(q.query.published==="true"?"WHERE published=1 ":"")+"ORDER BY id DESC");s.json({notices:a})});
-r.post("/",authenticateToken,authorize("admin","principal"),async(q,s)=>{const x=q.body,[z]=await db.query("INSERT INTO notices(title,description,published,publish_date,created_by) VALUES(?,?,?,NOW(),?)",[x.title,x.description,x.published?1:0,q.user.id]);s.status(201).json({id:z.insertId})});module.exports=r;
