@@ -1,0 +1,3 @@
+const r=require("express").Router(),db=require("../config/db"),{authenticateToken,authorize}=require("../middleware/auth");
+r.post("/",authenticateToken,authorize("admin","principal"),async(q,s)=>{try{const{x}=q.body,[z]=await db.query("INSERT INTO exams(name,academic_session,start_date,end_date,created_by) VALUES(?,?,?,?,?)",[x.name,x.academicSession,x.startDate||null,x.endDate||null,q.user.id]);s.status(201).json({id:z.insertId})}catch(e){s.status(400).json({message:e.message})}});
+r.get("/",authenticateToken,authorize("admin","principal","teacher"),async(q,s)=>{const[a]=await db.query("SELECT * FROM exams ORDER BY id DESC");s.json({exams:a})});module.exports=r;
