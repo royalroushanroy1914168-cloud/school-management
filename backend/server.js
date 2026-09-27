@@ -1,46 +1,309 @@
-require("dotenv").config();
 const express = require("express");
+const path = require("path");
+const { Pool } = require("pg");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");
-const db = require("./config/db");
 
 const app = express();
+
+const PORT = process.env.PORT || 10000;
+
+// ===============================
+// MIDDLEWARE
+// ===============================
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/students", require("./routes/students"));
-app.use("/api/teachers", require("./routes/teachers"));
-app.use("/api/principals", require("./routes/principals"));
-app.use("/api/attendance", require("./routes/attendance"));
-app.use("/api/exams", require("./routes/exams"));
-app.use("/api/marks", require("./routes/marks"));
-app.use("/api/fees", require("./routes/fees"));
-app.use("/api/notices", require("./routes/notices"));
-app.use("/api/settings", require("./routes/settings"));
-app.use("/api/results", require("./routes/results"));
+// ===============================
+// POSTGRESQL DATABASE
+// ===============================
 
-app.get("/", (req,res) => res.json({success:true,message:"ABC Public School API is running",database:"PostgreSQL"}));
+let pool = null;
 
-app.get("/api/health", async (req,res) => {
-  try { await db.query("SELECT 1"); res.json({success:true,message:"API and database are connected",database:"connected"}); }
-  catch(e) { console.error(e); res.status(500).json({success:false,message:"Database connection failed"}); }
-});
+if (process.env.DATABASE_URL) {
+    pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+            rejectUnauthorized: false
+        }
+    });
 
-async function createDefaultAdmin() {
-  try {
-    const r=await db.query("SELECT id FROM users WHERE user_id=$1 LIMIT 1",["admin"]);
-    if(!r.rows.length) {
-      const hash=await bcrypt.hash("Admin@123",10);
-      await db.query("INSERT INTO users (user_id,password,role,status) VALUES ($1,$2,$3,$4)",["admin",hash,"admin","active"]);
-      console.log("Default admin created.");
-    } else console.log("Admin account already exists.");
-  } catch(e) { console.error("Admin creation error:",e.message); }
+    pool.on("error", (err) => {
+        console.error("PostgreSQL error:", err);
+    });
+} else {
+    console.log("DATABASE_URL is not configured.");
 }
 
-app.use((req,res)=>res.status(404).json({success:false,message:"API endpoint not found"}));
-app.use((err,req,res,next)=>{console.error(err);res.status(500).json({success:false,message:"Internal server error"});});
+// ===============================
+// FRONTEND
+// ===============================
 
-const PORT=process.env.PORT||5000;
-app.listen(PORT, async()=>{console.log(`ABC Public School API running on port ${PORT}`); await createDefaultAdmin();});
+// Repository root is one level above /backend
+const frontendPath = path.join(__dirname, "..");
+
+// Serve CSS, JS, HTML and folders
+app.use(express.static(frontendPath));
+
+// ===============================
+// HOME PAGE
+// ===============================
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+// ===============================
+// API HEALTH CHECK
+// ===============================
+
+app.get("/api/health", async (req, res) => {
+    let databaseStatus = "Not configured";
+
+    if (pool) {
+        try {
+            await pool.query("SELECT NOW()");
+            databaseStatus = "PostgreSQL connected";
+        } catch (error) {
+            console.error(error);
+            databaseStatus = "PostgreSQL connection failed";
+        }
+    }
+
+    res.json({
+        success: true,
+        message: "ABC Public School API is running",
+        database: databaseStatus
+    });
+});
+
+// ===============================
+// DATABASE TEST
+// ===============================
+
+app.get("/api/database", async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({
+            success: false,
+            message: "DATABASE_URL is not configured"
+        });
+    }
+
+    try {
+        const result = await pool.query("SELECT NOW()");
+
+        res.json({
+            success: true,
+            message: "PostgreSQL database connected",
+            time: result.rows[0].now
+        });
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Database connection failed",
+            error: error.message
+        });
+    }
+});
+
+// ===============================
+// CREATE USERS TABLE
+// ===============================
+
+app.get("/api/setup", async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({
+            success: false,
+            message: "DATABASE_URL is not configured"
+        });
+    }
+
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(150) NOT NULL,
+                email VARCHAR(150) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        res.json({
+            success: true,
+            message: "Users table is ready"
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not create table",
+            error: error.message
+        });
+    }
+});
+
+// ===============================
+// CREATE USER
+// ===============================
+
+app.post("/api/users", async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({
+            success: false,
+            message: "Database not configured"
+        });
+    }
+
+    try {
+        const { name, email, password, role } = req.body;
+
+        if (!name || !email || !password || !role) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, email, password and role are required"
+            });
+        }
+
+        const result = await pool.query(
+            `
+            INSERT INTO users
+            (name, email, password, role)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id, name, email, role, created_at
+            `,
+            [name, email, password, role]
+        );
+
+        res.status(201).json({
+            success: true,
+            message: "User created successfully",
+            user: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not create user",
+            error: error.message
+        });
+    }
+});
+
+// ===============================
+// LOGIN
+// ===============================
+
+app.post("/api/login", async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({
+            success: false,
+            message: "Database not configured"
+        });
+    }
+
+    try {
+        const { email, password, role } = req.body;
+
+        if (!email || !password || !role) {
+            return res.status(400).json({
+                success: false,
+                message: "Email, password and role are required"
+            });
+        }
+
+        const result = await pool.query(
+            `
+            SELECT id, name, email, role
+            FROM users
+            WHERE email = $1
+            AND password = $2
+            AND role = $3
+            `,
+            [email, password, role]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email, password or role"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Login successful",
+            user: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Login failed",
+            error: error.message
+        });
+    }
+});
+
+// ===============================
+// GET ALL USERS
+// ===============================
+
+app.get("/api/users", async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({
+            success: false,
+            message: "Database not configured"
+        });
+    }
+
+    try {
+        const result = await pool.query(`
+            SELECT id, name, email, role, created_at
+            FROM users
+            ORDER BY id DESC
+        `);
+
+        res.json({
+            success: true,
+            users: result.rows
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not fetch users"
+        });
+    }
+});
+
+// ===============================
+// 404 API HANDLER
+// ===============================
+
+app.use("/api", (req, res) => {
+    res.status(404).json({
+        success: false,
+        message: "API endpoint not found"
+    });
+});
+
+// ===============================
+// START SERVER
+// ===============================
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`ABC Public School server running on port ${PORT}`);
+});
