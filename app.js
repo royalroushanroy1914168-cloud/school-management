@@ -2,7 +2,6 @@
 // ABC PUBLIC SCHOOL - FRONTEND APP
 // ==========================================
 
-// Render backend URL
 const API = "https://school-management-2-pbpv.onrender.com/api";
 
 const $ = (selector) => document.querySelector(selector);
@@ -33,7 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
             modal.style.display = "none";
         };
     }
-
 
     // Close modal when clicking outside
     if (modal) {
@@ -90,12 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Get role
                 const roleInput = $("#role");
 
-                let role = roleInput ? roleInput.value : "admin";
+                let role = roleInput
+                    ? roleInput.value
+                    : "admin";
 
                 role = role.toLowerCase();
 
 
-                // Get email/username
+                // Get email / username
                 let email = "";
 
                 const emailInput =
@@ -116,26 +116,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     $("input[type='password']");
 
                 const password =
-                    passwordInput ?
-                    passwordInput.value :
-                    "";
+                    passwordInput
+                        ? passwordInput.value
+                        : "";
 
 
                 // Validation
                 if (!email) {
-                    showMessage("Please enter Admin ID / Email.");
+                    showMessage(
+                        "Please enter Admin ID / Email."
+                    );
                     return;
                 }
 
                 if (!password) {
-                    showMessage("Please enter your password.");
+                    showMessage(
+                        "Please enter your password."
+                    );
                     return;
                 }
 
 
                 // Disable login button
                 const submitButton =
-                    loginForm.querySelector("button[type='submit']") ||
+                    loginForm.querySelector(
+                        "button[type='submit']"
+                    ) ||
                     loginForm.querySelector("button");
 
                 if (submitButton) {
@@ -148,21 +154,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 // CALL RENDER BACKEND
                 // --------------------------------------
 
-                const response = await fetch(API + "/login", {
+                const response = await fetch(
+                    API + "/login",
+                    {
+                        method: "POST",
 
-                    method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
 
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        role: role
-                    })
-
-                });
+                        body: JSON.stringify({
+                            email: email,
+                            password: password,
+                            role: role
+                        })
+                    }
+                );
 
 
                 // Read response
@@ -176,7 +184,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!response.ok || !data.success) {
 
                     showMessage(
-                        data.message || "Invalid login details."
+                        data.message ||
+                        "Invalid login details."
                     );
 
                     if (submitButton) {
@@ -197,8 +206,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     JSON.stringify(data.user)
                 );
 
-
-                showMessage("Login successful!");
+                showMessage(
+                    "Login successful!"
+                );
 
 
                 // --------------------------------------
@@ -207,22 +217,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 setTimeout(() => {
 
+                    // ADMIN
                     if (role === "admin") {
 
-                        window.location.href = "https://school-management-2-pbpv.onrender.com/admin-dashboard.html";
+                        window.location.href =
+                            "/admin/admin-dashboard.html";
 
                     }
 
+                    // PRINCIPAL
                     else if (role === "principal") {
-                           window.location.href = "https://school-management-2-pbpv.onrender.com/principal-dashboard.html";
-                       
+
+                        window.location.href =
+                            "/principal-dashboard.html";
+
                     }
 
+                    // TEACHER
                     else if (role === "teacher") {
 
-                          window.location.href = "https://school-management-2-pbpv.onrender.com/teacher-dashboard.html";
+                        window.location.href =
+                            "/teacher-dashboard.html";
+
                     }
 
+                    // DEFAULT
                     else {
 
                         window.location.href = "/";
@@ -240,14 +259,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
             catch (error) {
 
-                console.error("Login error:", error);
+                console.error(
+                    "Login error:",
+                    error
+                );
 
                 showMessage(
                     "Unable to connect to the server. Please try again."
                 );
 
                 const submitButton =
-                    loginForm.querySelector("button[type='submit']") ||
+                    loginForm.querySelector(
+                        "button[type='submit']"
+                    ) ||
                     loginForm.querySelector("button");
 
                 if (submitButton) {
@@ -277,7 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function showMessage(message) {
 
-    // Existing message element
     let messageBox =
         $("#loginMessage") ||
         $("#message") ||
@@ -286,9 +309,11 @@ function showMessage(message) {
 
     // If no message element exists,
     // create one
+
     if (!messageBox) {
 
-        messageBox = document.createElement("div");
+        messageBox =
+            document.createElement("div");
 
         messageBox.id = "loginMessage";
 
@@ -322,13 +347,16 @@ async function loadNotices() {
     try {
 
         const response =
-            await fetch(API + "/notices?published=true");
+            await fetch(
+                API + "/notices?published=true"
+            );
 
         if (!response.ok) {
             return;
         }
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
 
         // Find notice container
@@ -356,7 +384,8 @@ async function loadNotices() {
 
         notices.forEach((notice) => {
 
-            const div = document.createElement("div");
+            const div =
+                document.createElement("div");
 
             div.className = "notice";
 
@@ -365,7 +394,8 @@ async function loadNotices() {
                 document.createElement("h3");
 
             title.textContent =
-                notice.title || "Notice";
+                notice.title ||
+                "Notice";
 
 
             const text =
@@ -379,6 +409,7 @@ async function loadNotices() {
 
 
             div.appendChild(title);
+
             div.appendChild(text);
 
             noticeContainer.appendChild(div);
@@ -391,6 +422,7 @@ async function loadNotices() {
 
         // Notices are optional.
         // Don't stop the website if notices fail.
+
         console.log(
             "Notice service unavailable:",
             error.message
@@ -442,3 +474,96 @@ function getCurrentUser() {
     }
 
 }
+
+
+// ==========================================
+// ADMIN DASHBOARD NAVIGATION
+// ==========================================
+
+function openAdminPage(page) {
+
+    const pages = {
+
+        dashboard:
+            "/admin/admin-dashboard.html",
+
+        admission:
+            "/admin/admission.html",
+
+        students:
+            "/admin/students.html",
+
+        teacher:
+            "/admin/teacher.html",
+
+        principal:
+            "/admin/principal.html",
+
+        attendance:
+            "/admin/attendance.html",
+
+        exam:
+            "/admin/exam.html",
+
+        marks:
+            "/admin/marks.html",
+
+        fees:
+            "/admin/fees.html",
+
+        notices:
+            "/admin/notices.html",
+
+        setting:
+            "/admin/setting.html"
+
+    };
+
+
+    if (pages[page]) {
+
+        window.location.href =
+            pages[page];
+
+    } else {
+
+        console.error(
+            "Unknown admin page:",
+            page
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// ADMIN BUTTON EVENT HANDLERS
+// ==========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        document
+            .querySelectorAll(
+                "[data-admin-page]"
+            )
+            .forEach((button) => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const page =
+                            button.dataset.adminPage;
+
+                        openAdminPage(page);
+
+                    }
+                );
+
+            });
+
+    }
+);
