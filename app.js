@@ -209,23 +209,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     if (role === "admin") {
 
-                        window.location.href =
-                            "/admin-dashboard.html";
+                        window.location.href = "https://school-management-2-pbpv.onrender.com/admin-dashboard.html";
 
                     }
 
                     else if (role === "principal") {
-
-                        window.location.href =
-                            "/principal-dashboard.html";
-
+                           window.location.href = "https://school-management-2-pbpv.onrender.com/principal-dashboard.html";
+                       
                     }
 
                     else if (role === "teacher") {
 
-                        window.location.href =
-                            "/teacher-dashboard.html";
-
+                          window.location.href = "https://school-management-2-pbpv.onrender.com/teacher-dashboard.html";
                     }
 
                     else {
