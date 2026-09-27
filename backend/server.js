@@ -869,13 +869,32 @@ app.get(
                 frontendPath,
                 "admin",
                 "admin-dashboard.html"
+               "admin-admission.html"
+               "admin/teacher.html"
+       "admin/teacher.html"
+       "admin/students.html"
+       "admin/principal.html"
+       "admin/attendance.html"
+       "admin/exam.html"
+       "/admin/marks.html"
+       "/admin/notices.html"
+       "/admin/setting.html"
             )
         );
 
     }
 );
 
-
+/*
+"/admin/students.html">Students</a>
+<a href="/admin/teacher.html">Teachers</a>
+<a href="/admin/principal.html">Principals</a>
+<a href="/admin/attendance.html">Attendance</a>
+<a href="/admin/exam.html">Exams</a>
+<a href="/admin/fees.html">Fees</a>
+<a href="/admin/marks.html">Marks</a>
+<a href="/admin/notices.html">Notices</a>
+<a href="/admin/setting.html">Settings</a>
 /* =========================================================
    ADMISSION PAGE
 ========================================================= */
