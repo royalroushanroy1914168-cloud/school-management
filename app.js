@@ -13,9 +13,9 @@ const $ = (selector) => document.querySelector(selector);
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    // --------------------------------------
+    // ======================================
     // LOGIN MODAL
-    // --------------------------------------
+    // ======================================
 
     const modal = $("#modal");
     const loginBtn = $("#loginBtn");
@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    // Close modal when clicking outside
     if (modal) {
         window.onclick = (event) => {
             if (event.target === modal) {
@@ -43,9 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // --------------------------------------
+    // ======================================
     // ROLE BUTTONS
-    // --------------------------------------
+    // ======================================
 
     document.querySelectorAll("[data-role]").forEach((button) => {
 
@@ -59,21 +58,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 roleInput.value = role;
             }
 
-            // Remove active class
-            document.querySelectorAll("[data-role]").forEach((btn) => {
-                btn.classList.remove("active");
-            });
+            document
+                .querySelectorAll("[data-role]")
+                .forEach((btn) => {
+                    btn.classList.remove("active");
+                });
 
-            // Add active class
             button.classList.add("active");
         };
 
     });
 
 
-    // --------------------------------------
+    // ======================================
     // LOGIN FORM
-    // --------------------------------------
+    // ======================================
 
     const loginForm = $("#loginForm");
 
@@ -83,23 +82,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
             event.preventDefault();
 
+            const submitButton =
+                loginForm.querySelector(
+                    "button[type='submit']"
+                ) ||
+                loginForm.querySelector("button");
+
             try {
 
-                // Get role
+                // -------------------------------
+                // GET ROLE
+                // -------------------------------
+
                 const roleInput = $("#role");
 
                 let role = roleInput
-                    ? roleInput.value
+                    ? roleInput.value.trim().toLowerCase()
                     : "admin";
 
-                role = role.toLowerCase();
 
-
-                // --------------------------------------
-                // GET EMAIL / USERNAME / USER ID
-                // --------------------------------------
-
-                let email = "";
+                // -------------------------------
+                // GET USERNAME / EMAIL / USER ID
+                // -------------------------------
 
                 const emailInput =
                     $("#email") ||
@@ -108,63 +112,63 @@ document.addEventListener("DOMContentLoaded", () => {
                     $("#userid") ||
                     $("input[type='email']");
 
-                if (emailInput) {
-                    email = emailInput.value.trim();
-                }
+                const email = emailInput
+                    ? emailInput.value.trim()
+                    : "";
 
 
-                // --------------------------------------
+                // -------------------------------
                 // GET PASSWORD
-                // --------------------------------------
+                // -------------------------------
 
                 const passwordInput =
                     $("#password") ||
                     $("input[type='password']");
 
-                const password =
-                    passwordInput
-                        ? passwordInput.value
-                        : "";
+                const password = passwordInput
+                    ? passwordInput.value
+                    : "";
 
 
-                // --------------------------------------
+                // -------------------------------
                 // VALIDATION
-                // --------------------------------------
+                // -------------------------------
 
                 if (!email) {
+
                     showMessage(
                         "Please enter Admin ID / Email."
                     );
+
                     return;
                 }
 
                 if (!password) {
+
                     showMessage(
                         "Please enter your password."
                     );
+
                     return;
                 }
 
 
-                // --------------------------------------
-                // DISABLE LOGIN BUTTON
-                // --------------------------------------
-
-                const submitButton =
-                    loginForm.querySelector(
-                        "button[type='submit']"
-                    ) ||
-                    loginForm.querySelector("button");
+                // -------------------------------
+                // DISABLE BUTTON
+                // -------------------------------
 
                 if (submitButton) {
+
                     submitButton.disabled = true;
-                    submitButton.textContent = "Logging in...";
+                    submitButton.textContent =
+                        "Logging in...";
+
                 }
 
 
-                // --------------------------------------
-                // CALL RENDER BACKEND
-                // --------------------------------------
+                // =================================
+                // LOGIN API
+                // =================================
 
                 const response = await fetch(
                     API + "/login",
@@ -185,16 +189,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-                // --------------------------------------
-                // READ RESPONSE
-                // --------------------------------------
+                // -------------------------------
+                // READ SERVER RESPONSE
+                // -------------------------------
 
-                const data = await response.json();
+                let data = {};
+
+                try {
+                    data = await response.json();
+                }
+
+                catch (jsonError) {
+
+                    console.error(
+                        "Invalid server response:",
+                        jsonError
+                    );
+
+                    throw new Error(
+                        "Server returned an invalid response."
+                    );
+
+                }
 
 
-                // --------------------------------------
+                // =================================
                 // LOGIN FAILED
-                // --------------------------------------
+                // =================================
 
                 if (!response.ok || !data.success) {
 
@@ -204,74 +225,96 @@ document.addEventListener("DOMContentLoaded", () => {
                     );
 
                     if (submitButton) {
+
                         submitButton.disabled = false;
-                        submitButton.textContent = "Login";
+
+                        submitButton.textContent =
+                            "Login";
+
                     }
 
                     return;
                 }
 
 
-                // --------------------------------------
+                // =================================
                 // LOGIN SUCCESSFUL
-                // --------------------------------------
+                // =================================
 
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(data.user)
-                );
+                if (data.user) {
+
+                    localStorage.setItem(
+                        "user",
+                        JSON.stringify(data.user)
+                    );
+
+                }
+
 
                 showMessage(
                     "Login successful!"
                 );
 
 
-                // --------------------------------------
-                // REDIRECT ACCORDING TO ROLE
-                // --------------------------------------
+                // =================================
+                // ROLE REDIRECTION
+                // =================================
 
                 setTimeout(() => {
 
+                    // --------------------------------
                     // ADMIN
+                    // --------------------------------
+
                     if (role === "admin") {
 
-                        // FIXED PATH
                         window.location.href =
                             "/admin-dashboard.html";
 
+                        return;
                     }
 
+
+                    // --------------------------------
                     // PRINCIPAL
-                    else if (role === "principal") {
+                    // --------------------------------
+
+                    if (role === "principal") {
 
                         window.location.href =
                             "/principal-dashboard.html";
 
+                        return;
                     }
 
+
+                    // --------------------------------
                     // TEACHER
-                    else if (role === "teacher") {
+                    // --------------------------------
+
+                    if (role === "teacher") {
 
                         window.location.href =
                             "/teacher-dashboard.html";
 
+                        return;
                     }
 
-                    // DEFAULT
-                    else {
 
-                        window.location.href = "/";
+                    // --------------------------------
+                    // OTHER ROLES
+                    // --------------------------------
 
-                    }
+                    window.location.href = "/";
 
                 }, 500);
 
             }
 
 
-            // --------------------------------------
-            // NETWORK / SERVER ERROR
-            // --------------------------------------
+            // ======================================
+            // LOGIN ERROR
+            // ======================================
 
             catch (error) {
 
@@ -284,15 +327,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     "Unable to connect to the server. Please try again."
                 );
 
-                const submitButton =
-                    loginForm.querySelector(
-                        "button[type='submit']"
-                    ) ||
-                    loginForm.querySelector("button");
-
                 if (submitButton) {
+
                     submitButton.disabled = false;
-                    submitButton.textContent = "Login";
+
+                    submitButton.textContent =
+                        "Login";
+
                 }
 
             }
@@ -302,9 +343,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // --------------------------------------
-    // LOAD NOTICES
-    // --------------------------------------
+    // ======================================
+    // LOAD PUBLIC NOTICES
+    // ======================================
 
     loadNotices();
 
@@ -323,32 +364,45 @@ function showMessage(message) {
         $(".login-message");
 
 
-    // If no message element exists,
-    // create one
-
     if (!messageBox) {
 
         messageBox =
             document.createElement("div");
 
-        messageBox.id = "loginMessage";
+        messageBox.id =
+            "loginMessage";
 
-        messageBox.style.marginTop = "15px";
-        messageBox.style.padding = "10px";
-        messageBox.style.textAlign = "center";
-        messageBox.style.borderRadius = "6px";
+        messageBox.style.marginTop =
+            "15px";
 
-        const loginForm = $("#loginForm");
+        messageBox.style.padding =
+            "10px";
+
+        messageBox.style.textAlign =
+            "center";
+
+        messageBox.style.borderRadius =
+            "6px";
+
+        const loginForm =
+            $("#loginForm");
 
         if (loginForm) {
-            loginForm.appendChild(messageBox);
+
+            loginForm.appendChild(
+                messageBox
+            );
+
         }
 
     }
 
 
     if (messageBox) {
-        messageBox.textContent = message;
+
+        messageBox.textContent =
+            message;
+
     }
 
 }
@@ -364,18 +418,20 @@ async function loadNotices() {
 
         const response =
             await fetch(
-                API + "/notices?published=true"
+                API +
+                "/notices?published=true"
             );
+
 
         if (!response.ok) {
             return;
         }
 
+
         const data =
             await response.json();
 
 
-        // Find notice container
         const noticeContainer =
             $("#notices") ||
             $("#noticeList") ||
@@ -387,11 +443,9 @@ async function loadNotices() {
         }
 
 
-        // Clear existing notices
         noticeContainer.innerHTML = "";
 
 
-        // Check data
         const notices =
             data.notices ||
             data.data ||
@@ -403,7 +457,8 @@ async function loadNotices() {
             const div =
                 document.createElement("div");
 
-            div.className = "notice";
+            div.className =
+                "notice";
 
 
             const title =
@@ -436,9 +491,6 @@ async function loadNotices() {
 
     catch (error) {
 
-        // Notices are optional.
-        // Don't stop the website if notices fail.
-
         console.log(
             "Notice service unavailable:",
             error.message
@@ -455,7 +507,9 @@ async function loadNotices() {
 
 function logout() {
 
-    localStorage.removeItem("user");
+    localStorage.removeItem(
+        "user"
+    );
 
     window.location.href = "/";
 
@@ -471,9 +525,11 @@ function getCurrentUser() {
     const user =
         localStorage.getItem("user");
 
+
     if (!user) {
         return null;
     }
+
 
     try {
 
@@ -483,7 +539,9 @@ function getCurrentUser() {
 
     catch (error) {
 
-        localStorage.removeItem("user");
+        localStorage.removeItem(
+            "user"
+        );
 
         return null;
 
@@ -500,10 +558,12 @@ function openAdminPage(page) {
 
     const pages = {
 
-        // FIXED PATH
+        // IMPORTANT:
+        // admin-dashboard.html is in ROOT
         dashboard:
             "/admin-dashboard.html",
 
+        // These files are inside /admin/
         admission:
             "/admin/admission.html",
 
@@ -542,7 +602,9 @@ function openAdminPage(page) {
         window.location.href =
             pages[page];
 
-    } else {
+    }
+
+    else {
 
         console.error(
             "Unknown admin page:",
@@ -575,7 +637,9 @@ document.addEventListener(
                         const page =
                             button.dataset.adminPage;
 
-                        openAdminPage(page);
+                        openAdminPage(
+                            page
+                        );
 
                     }
                 );
