@@ -8,6 +8,7 @@ const app = express();
 
 const PORT = process.env.PORT || 10000;
 
+
 /* =========================================================
    MIDDLEWARE
 ========================================================= */
@@ -18,6 +19,7 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
+
 /* =========================================================
    FRONTEND PATH
    server.js is inside backend folder
@@ -25,17 +27,34 @@ app.use(express.urlencoded({ extended: true }));
 
 const frontendPath = path.join(__dirname, "..");
 
+
 /* =========================================================
    STATIC FILES
 ========================================================= */
 
 app.use(express.static(frontendPath));
 
-app.use("/css", express.static(path.join(frontendPath, "css")));
+app.use(
+    "/css",
+    express.static(
+        path.join(frontendPath, "css")
+    )
+);
 
-app.use("/js", express.static(path.join(frontendPath, "js")));
+app.use(
+    "/js",
+    express.static(
+        path.join(frontendPath, "js")
+    )
+);
 
-app.use("/admin", express.static(path.join(frontendPath, "admin")));
+app.use(
+    "/admin",
+    express.static(
+        path.join(frontendPath, "admin")
+    )
+);
+
 
 /* =========================================================
    POSTGRESQL DATABASE
@@ -44,8 +63,10 @@ app.use("/admin", express.static(path.join(frontendPath, "admin")));
 let pool = null;
 
 if (process.env.DATABASE_URL) {
+
     pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
+        connectionString:
+            process.env.DATABASE_URL,
 
         ssl: {
             rejectUnauthorized: false
@@ -53,89 +74,146 @@ if (process.env.DATABASE_URL) {
     });
 
     pool.on("error", (err) => {
-        console.error("PostgreSQL error:", err);
+
+        console.error(
+            "PostgreSQL error:",
+            err
+        );
+
     });
+
 } else {
-    console.log("DATABASE_URL is not configured.");
+
+    console.log(
+        "DATABASE_URL is not configured."
+    );
+
 }
+
 
 /* =========================================================
    HOME PAGE
 ========================================================= */
 
 app.get("/", (req, res) => {
+
     res.sendFile(
-        path.join(frontendPath, "index.html")
+        path.join(
+            frontendPath,
+            "index.html"
+        )
     );
+
 });
+
 
 /* =========================================================
    HEALTH CHECK
 ========================================================= */
 
-app.get("/api/health", async (req, res) => {
+app.get(
+    "/api/health",
+    async (req, res) => {
 
-    let databaseStatus = "Not configured";
+        let databaseStatus =
+            "Not configured";
 
-    if (pool) {
+        if (pool) {
 
-        try {
+            try {
 
-            await pool.query("SELECT NOW()");
+                await pool.query(
+                    "SELECT NOW()"
+                );
 
-            databaseStatus = "PostgreSQL connected";
+                databaseStatus =
+                    "PostgreSQL connected";
 
-        } catch (error) {
+            } catch (error) {
 
-            console.error(error);
+                console.error(error);
 
-            databaseStatus = "PostgreSQL connection failed";
+                databaseStatus =
+                    "PostgreSQL connection failed";
+
+            }
+
         }
-    }
 
-    res.json({
-        success: true,
-        message: "ABC Public School API is running",
-        database: databaseStatus
-    });
-});
+        res.json({
+
+            success: true,
+
+            message:
+                "ABC Public School API is running",
+
+            database:
+                databaseStatus
+
+        });
+
+    }
+);
+
 
 /* =========================================================
    DATABASE CHECK
 ========================================================= */
 
-app.get("/api/database", async (req, res) => {
+app.get(
+    "/api/database",
+    async (req, res) => {
 
-    if (!pool) {
+        if (!pool) {
 
-        return res.status(500).json({
-            success: false,
-            message: "DATABASE_URL is not configured"
-        });
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "DATABASE_URL is not configured"
+
+            });
+
+        }
+
+        try {
+
+            const result =
+                await pool.query(
+                    "SELECT NOW()"
+                );
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "PostgreSQL database connected",
+
+                time:
+                    result.rows[0].now
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Database connection failed"
+
+            });
+
+        }
+
     }
+);
 
-    try {
-
-        const result = await pool.query(
-            "SELECT NOW()"
-        );
-
-        res.json({
-            success: true,
-            message: "PostgreSQL database connected",
-            time: result.rows[0].now
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            success: false,
-            message: "Database connection failed"
-        });
-    }
-});
 
 /* =========================================================
    DATABASE SETUP
@@ -145,9 +223,12 @@ async function setupDatabase() {
 
     if (!pool) {
 
-        console.log("Database not configured.");
+        console.log(
+            "Database not configured."
+        );
 
         return;
+
     }
 
     await pool.query(`
@@ -164,48 +245,73 @@ async function setupDatabase() {
 
             role VARCHAR(50) NOT NULL,
 
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at
+                TIMESTAMP
+                DEFAULT CURRENT_TIMESTAMP
 
         )
 
     `);
 
-    console.log("Users table is ready.");
+    console.log(
+        "Users table is ready."
+    );
+
 }
+
 
 /* =========================================================
    MANUAL DATABASE SETUP
 ========================================================= */
 
-app.get("/api/setup", async (req, res) => {
+app.get(
+    "/api/setup",
+    async (req, res) => {
 
-    if (!pool) {
+        if (!pool) {
 
-        return res.status(500).json({
-            success: false,
-            message: "DATABASE_URL is not configured"
-        });
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "DATABASE_URL is not configured"
+
+            });
+
+        }
+
+        try {
+
+            await setupDatabase();
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "Users table is ready"
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Could not create table"
+
+            });
+
+        }
+
     }
+);
 
-    try {
-
-        await setupDatabase();
-
-        res.json({
-            success: true,
-            message: "Users table is ready"
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            success: false,
-            message: "Could not create table"
-        });
-    }
-});
 
 /* =========================================================
    CREATE PERMANENT ADMIN
@@ -223,13 +329,17 @@ async function ensureAdmin() {
         const adminPassword =
             process.env.ADMIN_PASSWORD;
 
-        if (!adminEmail || !adminPassword) {
+        if (
+            !adminEmail ||
+            !adminPassword
+        ) {
 
             console.log(
                 "ADMIN_EMAIL or ADMIN_PASSWORD is not configured."
             );
 
             return;
+
         }
 
         const existingAdmin =
@@ -245,7 +355,9 @@ async function ensureAdmin() {
 
             `);
 
-        if (existingAdmin.rows.length === 0) {
+        if (
+            existingAdmin.rows.length === 0
+        ) {
 
             const hashedPassword =
                 await bcrypt.hash(
@@ -281,6 +393,7 @@ async function ensureAdmin() {
             console.log(
                 "Admin account already exists."
             );
+
         }
 
     } catch (error) {
@@ -289,120 +402,171 @@ async function ensureAdmin() {
             "Admin setup error:",
             error
         );
+
     }
+
 }
+
 
 /* =========================================================
    LOGIN
 ========================================================= */
 
-app.post("/api/login", async (req, res) => {
+app.post(
+    "/api/login",
+    async (req, res) => {
 
-    if (!pool) {
+        if (!pool) {
 
-        return res.status(500).json({
-            success: false,
-            message: "Database not configured"
-        });
-    }
+            return res.status(500).json({
 
-    try {
-
-        const {
-            email,
-            password,
-            role
-        } = req.body;
-
-        if (!email || !password || !role) {
-
-            return res.status(400).json({
                 success: false,
+
                 message:
-                    "Email, password and role are required"
+                    "Database not configured"
+
             });
+
         }
 
-        const result = await pool.query(`
+        try {
 
-            SELECT
-                id,
-                name,
+            const {
                 email,
                 password,
                 role
+            } = req.body;
 
-            FROM users
 
-            WHERE email = $1
+            if (
+                !email ||
+                !password ||
+                !role
+            ) {
 
-            AND role = $2
+                return res.status(400).json({
 
-        `, [
+                    success: false,
 
-            email,
-            role
+                    message:
+                        "Email, password and role are required"
 
-        ]);
+                });
 
-        if (result.rows.length === 0) {
-
-            return res.status(401).json({
-                success: false,
-                message:
-                    "Invalid email, password or role"
-            });
-        }
-
-        const user = result.rows[0];
-
-        const passwordMatch =
-            await bcrypt.compare(
-                password,
-                user.password
-            );
-
-        if (!passwordMatch) {
-
-            return res.status(401).json({
-                success: false,
-                message:
-                    "Invalid email, password or role"
-            });
-        }
-
-        res.json({
-
-            success: true,
-
-            message: "Login successful",
-
-            user: {
-
-                id: user.id,
-
-                name: user.name,
-
-                email: user.email,
-
-                role: user.role
             }
 
-        });
 
-    } catch (error) {
+            const result =
+                await pool.query(`
 
-        console.error(
-            "Login error:",
-            error
-        );
+                    SELECT
+                        id,
+                        name,
+                        email,
+                        password,
+                        role
 
-        res.status(500).json({
-            success: false,
-            message: "Login failed"
-        });
+                    FROM users
+
+                    WHERE email = $1
+
+                    AND role = $2
+
+                `, [
+
+                    email,
+                    role
+
+                ]);
+
+
+            if (
+                result.rows.length === 0
+            ) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid email, password or role"
+
+                });
+
+            }
+
+
+            const user =
+                result.rows[0];
+
+
+            const passwordMatch =
+                await bcrypt.compare(
+                    password,
+                    user.password
+                );
+
+
+            if (!passwordMatch) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid email, password or role"
+
+                });
+
+            }
+
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "Login successful",
+
+                user: {
+
+                    id:
+                        user.id,
+
+                    name:
+                        user.name,
+
+                    email:
+                        user.email,
+
+                    role:
+                        user.role
+
+                }
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Login error:",
+                error
+            );
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Login failed"
+
+            });
+
+        }
+
     }
-});
+);
+
 
 /* =========================================================
    ADMIN CHANGE CREDENTIALS
@@ -415,10 +579,14 @@ app.put(
         if (!pool) {
 
             return res.status(500).json({
+
                 success: false,
+
                 message:
                     "Database not configured"
+
             });
+
         }
 
         try {
@@ -430,6 +598,7 @@ app.put(
                 newPassword
             } = req.body;
 
+
             if (
                 !oldEmail ||
                 !oldPassword ||
@@ -438,11 +607,16 @@ app.put(
             ) {
 
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         "All fields are required"
+
                 });
+
             }
+
 
             const result =
                 await pool.query(`
@@ -463,16 +637,26 @@ app.put(
 
                 ]);
 
-            if (result.rows.length === 0) {
+
+            if (
+                result.rows.length === 0
+            ) {
 
                 return res.status(401).json({
+
                     success: false,
+
                     message:
                         "Current Admin ID is incorrect"
+
                 });
+
             }
 
-            const admin = result.rows[0];
+
+            const admin =
+                result.rows[0];
+
 
             const passwordMatch =
                 await bcrypt.compare(
@@ -480,20 +664,27 @@ app.put(
                     admin.password
                 );
 
+
             if (!passwordMatch) {
 
                 return res.status(401).json({
+
                     success: false,
+
                     message:
                         "Current Admin password is incorrect"
+
                 });
+
             }
+
 
             const hashedPassword =
                 await bcrypt.hash(
                     newPassword,
                     12
                 );
+
 
             await pool.query(`
 
@@ -515,6 +706,7 @@ app.put(
 
             ]);
 
+
             res.json({
 
                 success: true,
@@ -532,183 +724,229 @@ app.put(
             );
 
             res.status(500).json({
+
                 success: false,
+
                 message:
                     "Could not change Admin credentials"
+
             });
+
         }
+
     }
 );
+
 
 /* =========================================================
    CREATE USER
 ========================================================= */
 
-app.post("/api/users", async (req, res) => {
+app.post(
+    "/api/users",
+    async (req, res) => {
 
-    if (!pool) {
+        if (!pool) {
 
-        return res.status(500).json({
-            success: false,
-            message:
-                "Database not configured"
-        });
-    }
+            return res.status(500).json({
 
-    try {
-
-        const {
-            name,
-            email,
-            password,
-            role
-        } = req.body;
-
-        if (
-            !name ||
-            !email ||
-            !password ||
-            !role
-        ) {
-
-            return res.status(400).json({
                 success: false,
+
                 message:
-                    "Name, email, password and role are required"
+                    "Database not configured"
+
             });
+
         }
 
-        const hashedPassword =
-            await bcrypt.hash(
-                password,
-                12
-            );
+        try {
 
-        const result =
-            await pool.query(`
-
-                INSERT INTO users
-                (name, email, password, role)
-
-                VALUES ($1, $2, $3, $4)
-
-                RETURNING
-                    id,
-                    name,
-                    email,
-                    role,
-                    created_at
-
-            `, [
-
+            const {
                 name,
-
                 email,
-
-                hashedPassword,
-
+                password,
                 role
+            } = req.body;
 
-            ]);
 
-        res.status(201).json({
+            if (
+                !name ||
+                !email ||
+                !password ||
+                !role
+            ) {
 
-            success: true,
+                return res.status(400).json({
 
-            message:
-                "User created successfully",
+                    success: false,
 
-            user: result.rows[0]
+                    message:
+                        "Name, email, password and role are required"
 
-        });
+                });
 
-    } catch (error) {
+            }
 
-        console.error(error);
 
-        res.status(500).json({
-            success: false,
-            message:
-                "Could not create user"
-        });
+            const hashedPassword =
+                await bcrypt.hash(
+                    password,
+                    12
+                );
+
+
+            const result =
+                await pool.query(`
+
+                    INSERT INTO users
+                    (name, email, password, role)
+
+                    VALUES ($1, $2, $3, $4)
+
+                    RETURNING
+                        id,
+                        name,
+                        email,
+                        role,
+                        created_at
+
+                `, [
+
+                    name,
+
+                    email,
+
+                    hashedPassword,
+
+                    role
+
+                ]);
+
+
+            res.status(201).json({
+
+                success: true,
+
+                message:
+                    "User created successfully",
+
+                user:
+                    result.rows[0]
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Could not create user"
+
+            });
+
+        }
+
     }
-});
+);
+
 
 /* =========================================================
    GET USERS
 ========================================================= */
 
-app.get("/api/users", async (req, res) => {
+app.get(
+    "/api/users",
+    async (req, res) => {
 
-    if (!pool) {
+        if (!pool) {
 
-        return res.status(500).json({
-            success: false,
-            message:
-                "Database not configured"
-        });
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Database not configured"
+
+            });
+
+        }
+
+        try {
+
+            const result =
+                await pool.query(`
+
+                    SELECT
+                        id,
+                        name,
+                        email,
+                        role,
+                        created_at
+
+                    FROM users
+
+                    ORDER BY id DESC
+
+                `);
+
+
+            res.json({
+
+                success: true,
+
+                users:
+                    result.rows
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Could not fetch users"
+
+            });
+
+        }
+
     }
+);
 
-    try {
-
-        const result =
-            await pool.query(`
-
-                SELECT
-                    id,
-                    name,
-                    email,
-                    role,
-                    created_at
-
-                FROM users
-
-                ORDER BY id DESC
-
-            `);
-
-        res.json({
-
-            success: true,
-
-            users: result.rows
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            success: false,
-            message:
-                "Could not fetch users"
-        });
-    }
-});
 
 /* =========================================================
    ADMIN DASHBOARD
+   IMPORTANT:
+   admin-dashboard.html is in PROJECT ROOT
 ========================================================= */
 
 app.get(
     [
         "/admin",
         "/admin/",
-        "/admin/admin-dashboard.html"
+        "/admin/admin-dashboard.html",
+        "/admin-dashboard.html"
     ],
     (req, res) => {
 
         res.sendFile(
             path.join(
                 frontendPath,
-                "admin",
                 "admin-dashboard.html"
             )
         );
 
     }
 );
+
 
 /* =========================================================
    ADMISSION PAGE
@@ -729,6 +967,7 @@ app.get(
     }
 );
 
+
 /* =========================================================
    STUDENTS
 ========================================================= */
@@ -747,6 +986,7 @@ app.get(
 
     }
 );
+
 
 /* =========================================================
    TEACHER
@@ -767,6 +1007,7 @@ app.get(
     }
 );
 
+
 /* =========================================================
    PRINCIPAL
 ========================================================= */
@@ -785,6 +1026,7 @@ app.get(
 
     }
 );
+
 
 /* =========================================================
    EXAM
@@ -805,6 +1047,7 @@ app.get(
     }
 );
 
+
 /* =========================================================
    ATTENDANCE
 ========================================================= */
@@ -823,6 +1066,7 @@ app.get(
 
     }
 );
+
 
 /* =========================================================
    MARKS
@@ -843,6 +1087,7 @@ app.get(
     }
 );
 
+
 /* =========================================================
    FEES
 ========================================================= */
@@ -861,6 +1106,7 @@ app.get(
 
     }
 );
+
 
 /* =========================================================
    NOTICES
@@ -881,6 +1127,7 @@ app.get(
     }
 );
 
+
 /* =========================================================
    SETTINGS
 ========================================================= */
@@ -900,82 +1147,94 @@ app.get(
     }
 );
 
+
 /* =========================================================
    API 404
 ========================================================= */
 
-app.use("/api", (req, res) => {
+app.use(
+    "/api",
+    (req, res) => {
 
-    res.status(404).json({
+        res.status(404).json({
 
-        success: false,
+            success: false,
 
-        message:
-            "API endpoint not found"
+            message:
+                "API endpoint not found"
 
-    });
+        });
 
-});
+    }
+);
+
 
 /* =========================================================
    PAGE 404
 ========================================================= */
 
-app.use((req, res) => {
+app.use(
+    (req, res) => {
 
-    res.status(404).send(`
+        res.status(404).send(`
 
-        <!DOCTYPE html>
+            <!DOCTYPE html>
 
-        <html>
+            <html>
 
-        <head>
+            <head>
 
-            <title>404 - Page Not Found</title>
+                <title>
+                    404 - Page Not Found
+                </title>
 
-            <style>
+                <style>
 
-                body {
-                    font-family: Arial, sans-serif;
-                    text-align: center;
-                    padding: 60px;
-                }
+                    body {
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        padding: 60px;
+                    }
 
-                h1 {
-                    font-size: 50px;
-                    margin-bottom: 10px;
-                }
+                    h1 {
+                        font-size: 50px;
+                        margin-bottom: 10px;
+                    }
 
-                a {
-                    text-decoration: none;
-                    color: #2563eb;
-                }
+                    a {
+                        text-decoration: none;
+                        color: #2563eb;
+                    }
 
-            </style>
+                </style>
 
-        </head>
+            </head>
 
-        <body>
+            <body>
 
-            <h1>404</h1>
+                <h1>404</h1>
 
-            <h2>Page Not Found</h2>
+                <h2>
+                    Page Not Found
+                </h2>
 
-            <p>
-                The requested page does not exist.
-            </p>
+                <p>
+                    The requested page does not exist.
+                </p>
 
-            <a href="/">
-                Go to Home
-            </a>
+                <a href="/">
+                    Go to Home
+                </a>
 
-        </body>
+            </body>
 
-        </html>
+            </html>
 
-    `);
+        `);
 
-});
+    }
+);
+
 
 /* =========================================================
    START SERVER
@@ -988,6 +1247,7 @@ async function startServer() {
         await setupDatabase();
 
         await ensureAdmin();
+
 
         app.listen(
             PORT,
@@ -1013,5 +1273,6 @@ async function startServer() {
     }
 
 }
+
 
 startServer();
