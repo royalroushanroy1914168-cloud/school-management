@@ -9,66 +9,57 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 
-// ==================================================
-// MIDDLEWARE
-// ==================================================
+/* =========================================================
+   MIDDLEWARE
+========================================================= */
 
 app.use(cors());
 
 app.use(express.json());
 
-app.use(express.urlencoded({
-    extended: true
-}));
+app.use(express.urlencoded({ extended: true }));
 
 
-// ==================================================
-// FRONTEND PATH
-// server.js is inside /backend
-// ==================================================
+/* =========================================================
+   FRONTEND PATH
+   server.js is inside /backend
+========================================================= */
 
 const frontendPath = path.join(__dirname, "..");
 
 
-// ==================================================
-// STATIC FILES
-// ==================================================
+/* =========================================================
+   STATIC FILES
+========================================================= */
 
 app.use(express.static(frontendPath));
 
 app.use(
     "/css",
-    express.static(
-        path.join(frontendPath, "css")
-    )
+    express.static(path.join(frontendPath, "css"))
 );
 
 app.use(
     "/js",
-    express.static(
-        path.join(frontendPath, "js")
-    )
+    express.static(path.join(frontendPath, "js"))
 );
 
 app.use(
     "/admin",
-    express.static(
-        path.join(frontendPath, "admin")
-    )
+    express.static(path.join(frontendPath, "admin"))
 );
 
 
-// ==================================================
-// POSTGRESQL
-// ==================================================
+/* =========================================================
+   POSTGRESQL
+========================================================= */
 
 let pool = null;
 
 if (process.env.DATABASE_URL) {
 
     pool = new Pool({
-        connectionString:
-            process.env.DATABASE_URL,
+        connectionString: process.env.DATABASE_URL,
 
         ssl: {
             rejectUnauthorized: false
@@ -76,12 +67,7 @@ if (process.env.DATABASE_URL) {
     });
 
     pool.on("error", (error) => {
-
-        console.error(
-            "PostgreSQL error:",
-            error
-        );
-
+        console.error("PostgreSQL error:", error);
     });
 
 } else {
@@ -89,13 +75,12 @@ if (process.env.DATABASE_URL) {
     console.log(
         "DATABASE_URL is not configured."
     );
-
 }
 
 
-// ==================================================
-// HOME PAGE
-// ==================================================
+/* =========================================================
+   HOME PAGE
+========================================================= */
 
 app.get("/", (req, res) => {
 
@@ -109,57 +94,106 @@ app.get("/", (req, res) => {
 });
 
 
-// ==================================================
-// HEALTH CHECK
-// ==================================================
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
 
-app.get(
-    "/api/health",
-    async (req, res) => {
+app.get("/api/health", async (req, res) => {
 
-        let database =
-            "Not configured";
+    let databaseStatus = "Not configured";
 
-        if (pool) {
+    if (pool) {
 
-            try {
+        try {
 
-                await pool.query(
-                    "SELECT NOW()"
-                );
+            await pool.query("SELECT NOW()");
 
-                database =
-                    "PostgreSQL connected";
+            databaseStatus =
+                "PostgreSQL connected";
 
-            } catch (error) {
+        } catch (error) {
 
-                console.error(error);
+            console.error(error);
 
-                database =
-                    "PostgreSQL connection failed";
-
-            }
-
+            databaseStatus =
+                "PostgreSQL connection failed";
         }
+    }
+
+    res.json({
+
+        success: true,
+
+        message:
+            "ABC Public School API is running",
+
+        database:
+            databaseStatus
+
+    });
+
+});
+
+
+/* =========================================================
+   DATABASE CHECK
+========================================================= */
+
+app.get("/api/database", async (req, res) => {
+
+    if (!pool) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "DATABASE_URL is not configured"
+
+        });
+
+    }
+
+    try {
+
+        const result =
+            await pool.query(
+                "SELECT NOW()"
+            );
 
         res.json({
 
             success: true,
 
             message:
-                "ABC Public School API is running",
+                "PostgreSQL database connected",
 
-            database: database
+            time:
+                result.rows[0].now
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                "Database connection failed"
 
         });
 
     }
-);
+
+});
 
 
-// ==================================================
-// DATABASE SETUP
-// ==================================================
+/* =========================================================
+   DATABASE SETUP
+========================================================= */
 
 async function setupDatabase() {
 
@@ -170,7 +204,6 @@ async function setupDatabase() {
         );
 
         return;
-
     }
 
     await pool.query(`
@@ -188,8 +221,7 @@ async function setupDatabase() {
             role VARCHAR(50) NOT NULL,
 
             created_at
-                TIMESTAMP
-                DEFAULT CURRENT_TIMESTAMP
+                TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         )
 
@@ -202,9 +234,9 @@ async function setupDatabase() {
 }
 
 
-// ==================================================
-// CREATE DEFAULT ADMIN
-// ==================================================
+/* =========================================================
+   ENSURE ADMIN
+========================================================= */
 
 async function ensureAdmin() {
 
@@ -214,30 +246,46 @@ async function ensureAdmin() {
 
     try {
 
-        const result =
-            await pool.query(
-                `
-                SELECT id
-                FROM users
-                WHERE role = 'admin'
-                LIMIT 1
-                `
+        const adminEmail =
+            process.env.ADMIN_EMAIL;
+
+        const adminPassword =
+            process.env.ADMIN_PASSWORD;
+
+        if (!adminEmail || !adminPassword) {
+
+            console.log(
+                "ADMIN_EMAIL or ADMIN_PASSWORD is not configured."
             );
 
-        if (result.rows.length === 0) {
+            return;
+        }
 
-            const password =
-                process.env.ADMIN_PASSWORD ||
-                "admin123";
+        const existingAdmin =
+            await pool.query(`
+
+                SELECT id
+
+                FROM users
+
+                WHERE role = 'admin'
+
+                LIMIT 1
+
+            `);
+
+        if (
+            existingAdmin.rows.length === 0
+        ) {
 
             const hashedPassword =
                 await bcrypt.hash(
-                    password,
+                    adminPassword,
                     12
                 );
 
-            await pool.query(
-                `
+            await pool.query(`
+
                 INSERT INTO users
                 (
                     name,
@@ -245,19 +293,23 @@ async function ensureAdmin() {
                     password,
                     role
                 )
-                VALUES
-                ($1, $2, $3, $4)
-                `,
-                [
-                    "Administrator",
-                    "admin@school.com",
-                    hashedPassword,
-                    "admin"
-                ]
-            );
+
+                VALUES ($1, $2, $3, $4)
+
+            `, [
+
+                "School Administrator",
+
+                adminEmail,
+
+                hashedPassword,
+
+                "admin"
+
+            ]);
 
             console.log(
-                "Default admin created."
+                "Admin account created."
             );
 
         } else {
@@ -271,7 +323,7 @@ async function ensureAdmin() {
     } catch (error) {
 
         console.error(
-            "Admin creation error:",
+            "Admin setup error:",
             error
         );
 
@@ -280,349 +332,344 @@ async function ensureAdmin() {
 }
 
 
-// ==================================================
-// LOGIN
-// ==================================================
+/* =========================================================
+   LOGIN
+========================================================= */
 
-app.post(
-    "/api/login",
-    async (req, res) => {
+app.post("/api/login", async (req, res) => {
 
-        if (!pool) {
+    if (!pool) {
 
-            return res.status(500).json({
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Database not configured"
+
+        });
+
+    }
+
+    try {
+
+        const {
+            email,
+            password,
+            role
+        } = req.body;
+
+        if (
+            !email ||
+            !password ||
+            !role
+        ) {
+
+            return res.status(400).json({
 
                 success: false,
 
                 message:
-                    "Database not configured"
+                    "Email, password and role are required"
 
             });
 
         }
 
-        try {
+        const result =
+            await pool.query(`
 
-            const {
-                email,
-                password,
-                role
-            } = req.body;
-
-            if (
-                !email ||
-                !password ||
-                !role
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Email, password and role are required"
-
-                });
-
-            }
-
-            const result =
-                await pool.query(
-                    `
-                    SELECT
-                        id,
-                        name,
-                        email,
-                        password,
-                        role
-                    FROM users
-                    WHERE LOWER(email) = LOWER($1)
-                    LIMIT 1
-                    `,
-                    [email]
-                );
-
-            if (
-                result.rows.length === 0
-            ) {
-
-                return res.status(401).json({
-
-                    success: false,
-
-                    message:
-                        "Invalid login details"
-
-                });
-
-            }
-
-            const user =
-                result.rows[0];
-
-
-            if (
-                user.role.toLowerCase() !==
-                role.toLowerCase()
-            ) {
-
-                return res.status(401).json({
-
-                    success: false,
-
-                    message:
-                        "Selected role does not match this account"
-
-                });
-
-            }
-
-
-            const validPassword =
-                await bcrypt.compare(
+                SELECT
+                    id,
+                    name,
+                    email,
                     password,
-                    user.password
-                );
+                    role
 
+                FROM users
 
-            if (!validPassword) {
+                WHERE LOWER(email) = LOWER($1)
 
-                return res.status(401).json({
+                AND LOWER(role) = LOWER($2)
 
-                    success: false,
+            `, [
 
-                    message:
-                        "Invalid login details"
+                email.trim(),
 
-                });
+                role.trim()
 
-            }
+            ]);
 
+        if (result.rows.length === 0) {
 
-            delete user.password;
+            return res.status(401).json({
 
-
-            res.json({
-
-                success: true,
+                success: false,
 
                 message:
-                    "Login successful",
-
-                user: user
+                    "Invalid email, password or role"
 
             });
 
-        } catch (error) {
+        }
 
-            console.error(
-                "Login error:",
-                error
+        const user =
+            result.rows[0];
+
+        const passwordMatch =
+            await bcrypt.compare(
+                password,
+                user.password
             );
 
-            res.status(500).json({
+        if (!passwordMatch) {
+
+            return res.status(401).json({
 
                 success: false,
 
                 message:
-                    "Login failed"
+                    "Invalid email, password or role"
 
             });
 
         }
 
-    }
-);
+        res.json({
 
+            success: true,
 
-// ==================================================
-// CREATE USER
-// ==================================================
+            message:
+                "Login successful",
 
-app.post(
-    "/api/users",
-    async (req, res) => {
+            user: {
 
-        if (!pool) {
+                id:
+                    user.id,
 
-            return res.status(500).json({
+                name:
+                    user.name,
 
-                success: false,
+                email:
+                    user.email,
 
-                message:
-                    "Database not configured"
-
-            });
-
-        }
-
-        try {
-
-            const {
-                name,
-                email,
-                password,
-                role
-            } = req.body;
-
-
-            if (
-                !name ||
-                !email ||
-                !password ||
-                !role
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Name, email, password and role are required"
-
-                });
+                role:
+                    user.role
 
             }
 
+        });
 
-            const hashedPassword =
-                await bcrypt.hash(
-                    password,
-                    12
-                );
+    } catch (error) {
 
+        console.error(
+            "Login error:",
+            error
+        );
 
-            const result =
-                await pool.query(
-                    `
-                    INSERT INTO users
-                    (
-                        name,
-                        email,
-                        password,
-                        role
-                    )
-                    VALUES
-                    ($1, $2, $3, $4)
-                    RETURNING
-                        id,
-                        name,
-                        email,
-                        role,
-                        created_at
-                    `,
-                    [
-                        name,
-                        email,
-                        hashedPassword,
-                        role
-                    ]
-                );
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                "Login failed"
+
+        });
+
+    }
+
+});
 
 
-            res.status(201).json({
+/* =========================================================
+   CREATE USER
+========================================================= */
 
-                success: true,
+app.post("/api/users", async (req, res) => {
+
+    if (!pool) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Database not configured"
+
+        });
+
+    }
+
+    try {
+
+        const {
+            name,
+            email,
+            password,
+            role
+        } = req.body;
+
+        if (
+            !name ||
+            !email ||
+            !password ||
+            !role
+        ) {
+
+            return res.status(400).json({
+
+                success: false,
 
                 message:
-                    "User created successfully",
-
-                user:
-                    result.rows[0]
+                    "Name, email, password and role are required"
 
             });
 
-        } catch (error) {
+        }
 
-            console.error(
-                "Create user error:",
-                error
+        const hashedPassword =
+            await bcrypt.hash(
+                password,
+                12
             );
 
-            res.status(500).json({
+        const result =
+            await pool.query(`
 
-                success: false,
+                INSERT INTO users
+                (
+                    name,
+                    email,
+                    password,
+                    role
+                )
 
-                message:
-                    "Could not create user"
+                VALUES ($1, $2, $3, $4)
 
-            });
+                RETURNING
+                    id,
+                    name,
+                    email,
+                    role,
+                    created_at
 
-        }
+            `, [
 
-    }
-);
+                name.trim(),
 
+                email.trim(),
 
-// ==================================================
-// GET USERS
-// ==================================================
+                hashedPassword,
 
-app.get(
-    "/api/users",
-    async (req, res) => {
+                role.trim()
 
-        if (!pool) {
+            ]);
 
-            return res.status(500).json({
+        res.status(201).json({
 
-                success: false,
+            success: true,
 
-                message:
-                    "Database not configured"
+            message:
+                "User created successfully",
 
-            });
+            user:
+                result.rows[0]
 
-        }
+        });
 
-        try {
+    } catch (error) {
 
-            const result =
-                await pool.query(
-                    `
-                    SELECT
-                        id,
-                        name,
-                        email,
-                        role,
-                        created_at
-                    FROM users
-                    ORDER BY id DESC
-                    `
-                );
+        console.error(
+            "Create user error:",
+            error
+        );
 
+        res.status(500).json({
 
-            res.json({
+            success: false,
 
-                success: true,
+            message:
+                "Could not create user"
 
-                users:
-                    result.rows
-
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Could not fetch users"
-
-            });
-
-        }
+        });
 
     }
-);
+
+});
 
 
-// ==================================================
-// ADMIN DASHBOARD
-// ==================================================
+/* =========================================================
+   GET USERS
+========================================================= */
+
+app.get("/api/users", async (req, res) => {
+
+    if (!pool) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Database not configured"
+
+        });
+
+    }
+
+    try {
+
+        const result =
+            await pool.query(`
+
+                SELECT
+                    id,
+                    name,
+                    email,
+                    role,
+                    created_at
+
+                FROM users
+
+                ORDER BY id DESC
+
+            `);
+
+        res.json({
+
+            success: true,
+
+            users:
+                result.rows
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Get users error:",
+            error
+        );
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                "Could not fetch users"
+
+        });
+
+    }
+
+});
+
+
+/* =========================================================
+   ADMIN DASHBOARD
+   IMPORTANT:
+   admin-dashboard.html is in ROOT
+========================================================= */
 
 app.get(
     [
@@ -645,297 +692,155 @@ app.get(
 );
 
 
-// ==================================================
-// ADMIN ADMISSION
-// ==================================================
+/* =========================================================
+   ADMIN PAGES
+========================================================= */
 
-app.get(
-    [
-        "/admin/admission.html",
-        "/admin/index-admission.html"
-    ],
-    (req, res) => {
+const adminPages = {
 
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "admission.html"
-            )
+    admission:
+        "admission.html",
+
+    students:
+        "students.html",
+
+    teacher:
+        "teacher.html",
+
+    principal:
+        "principal.html",
+
+    exam:
+        "exam.html",
+
+    attendance:
+        "attendance.html",
+
+    marks:
+        "marks.html",
+
+    fees:
+        "fees.html",
+
+    notices:
+        "notices.html",
+
+    setting:
+        "setting.html"
+
+};
+
+
+Object.entries(adminPages).forEach(
+    ([routeName, fileName]) => {
+
+        app.get(
+            `/admin/${fileName}`,
+            (req, res) => {
+
+                res.sendFile(
+                    path.join(
+                        frontendPath,
+                        "admin",
+                        fileName
+                    )
+                );
+
+            }
         );
 
     }
 );
 
 
-// ==================================================
-// ADMIN STUDENTS
-// ==================================================
-
-app.get(
-    "/admin/students.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "students.html"
-            )
-        );
-
-    }
-);
-
-
-// ==================================================
-// ADMIN TEACHER
-// ==================================================
-
-app.get(
-    "/admin/teacher.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "teacher.html"
-            )
-        );
-
-    }
-);
-
-
-// ==================================================
-// ADMIN PRINCIPAL
-// ==================================================
-
-app.get(
-    "/admin/principal.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "principal.html"
-            )
-        );
-
-    }
-);
-
-
-// ==================================================
-// ADMIN EXAM
-// ==================================================
-
-app.get(
-    "/admin/exam.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "exam.html"
-            )
-        );
-
-    }
-);
-
-
-// ==================================================
-// ADMIN ATTENDANCE
-// ==================================================
-
-app.get(
-    "/admin/attendance.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "attendance.html"
-            )
-        );
+/* =========================================================
+   API 404
+========================================================= */
 
-    }
-);
+app.use("/api", (req, res) => {
 
+    res.status(404).json({
 
-// ==================================================
-// ADMIN MARKS
-// ==================================================
+        success: false,
 
-app.get(
-    "/admin/marks.html",
-    (req, res) => {
+        message:
+            "API endpoint not found"
 
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "marks.html"
-            )
-        );
+    });
 
-    }
-);
+});
 
 
-// ==================================================
-// ADMIN FEES
-// ==================================================
+/* =========================================================
+   PAGE 404
+========================================================= */
 
-app.get(
-    "/admin/fees.html",
-    (req, res) => {
+app.use((req, res) => {
 
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "fees.html"
-            )
-        );
+    res.status(404).send(`
 
-    }
-);
+        <!DOCTYPE html>
 
+        <html>
 
-// ==================================================
-// ADMIN NOTICES
-// ==================================================
+        <head>
 
-app.get(
-    "/admin/notices.html",
-    (req, res) => {
+            <meta charset="UTF-8">
 
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "notices.html"
-            )
-        );
+            <title>
+                404 - Page Not Found
+            </title>
 
-    }
-);
+            <style>
 
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 60px;
+                    background: #f4f7fb;
+                }
 
-// ==================================================
-// ADMIN SETTINGS
-// ==================================================
+                h1 {
+                    font-size: 60px;
+                    margin-bottom: 10px;
+                }
 
-app.get(
-    "/admin/setting.html",
-    (req, res) => {
+                a {
+                    color: #07539b;
+                    text-decoration: none;
+                    font-weight: bold;
+                }
 
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "setting.html"
-            )
-        );
+            </style>
 
-    }
-);
+        </head>
 
+        <body>
 
-// ==================================================
-// API 404
-// ==================================================
+            <h1>404</h1>
 
-app.use(
-    "/api",
-    (req, res) => {
+            <h2>Page Not Found</h2>
 
-        res.status(404).json({
+            <p>
+                The requested page does not exist.
+            </p>
 
-            success: false,
+            <a href="/">
+                Go to Home
+            </a>
 
-            message:
-                "API endpoint not found"
+        </body>
 
-        });
+        </html>
 
-    }
-);
+    `);
 
+});
 
-// ==================================================
-// PAGE 404
-// ==================================================
 
-app.use(
-    (req, res) => {
-
-        res.status(404).send(`
-
-            <!DOCTYPE html>
-
-            <html>
-
-            <head>
-
-                <title>
-                    404 - Page Not Found
-                </title>
-
-                <style>
-
-                    body {
-                        font-family: Arial;
-                        text-align: center;
-                        padding: 60px;
-                    }
-
-                    h1 {
-                        font-size: 60px;
-                    }
-
-                    a {
-                        color: #2563eb;
-                        text-decoration: none;
-                    }
-
-                </style>
-
-            </head>
-
-            <body>
-
-                <h1>404</h1>
-
-                <h2>Page Not Found</h2>
-
-                <p>
-                    The requested page does not exist.
-                </p>
-
-                <a href="/">
-                    Go to Home
-                </a>
-
-            </body>
-
-            </html>
-
-        `);
-
-    }
-);
-
-
-// ==================================================
-// START SERVER
-// ==================================================
+/* =========================================================
+   START SERVER
+========================================================= */
 
 async function startServer() {
 
@@ -944,7 +849,6 @@ async function startServer() {
         await setupDatabase();
 
         await ensureAdmin();
-
 
         app.listen(
             PORT,
@@ -970,6 +874,5 @@ async function startServer() {
     }
 
 }
-
 
 startServer();
