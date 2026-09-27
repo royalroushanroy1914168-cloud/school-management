@@ -12,6 +12,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const frontendPath = path.join(__dirname, "..");
+
+app.use(express.static(frontendPath));
+
+app.use("/css", express.static(path.join(frontendPath, "css")));
+app.use("/js", express.static(path.join(frontendPath, "js")));
+
 // ===============================
 // POSTGRESQL
 // ===============================
