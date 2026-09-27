@@ -1,0 +1,9 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-shell"><aside class="sidebar"><div class="brand-mini">🏫 ABC School</div><h3>Attendance</h3><a href="/parent/profile.html">Dashboard</a><a href="#" onclick="logout()">🚪 Logout</a></aside>
+<main class="content"><div class="topbar"><h1>Attendance</h1></div>
+<div class="panel"><h2>Attendance</h2><p id="status">Loading connected data...</p><div id="data"></div></div>
+</main>
+<script src="/js/auth.js"></script><script>requireRole("parent");
+api("/attendance").then(d=>{status.textContent="Connected successfully";const arr=Object.values(d).find(x=>Array.isArray(x));if(arr&&arr.length)data.innerHTML="<div class='table-wrap'><table><tr><th>Record</th><th>Details</th></tr>"+arr.slice(0,20).map((x,i)=>"<tr><td>"+(i+1)+"</td><td>"+esc(JSON.stringify(x))+"</td></tr>").join("")+"</table></div>"}).catch(e=>status.textContent=e.message)
+</script></body></html>

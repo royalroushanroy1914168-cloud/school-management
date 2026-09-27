@@ -1,0 +1,9 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Principal Dashboard</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-shell"><aside class="sidebar"><div class="brand-mini">🏫 ABC School</div><div class="role-name">Principal Dashboard</div><a href="/principal/admission.html">Admissions</a><a href="/principal/students.html">Students</a><a href="/principal/teachers.html">Teachers</a><a href="/principal/attendance.html">Attendance</a><a href="/principal/exams.html">Exams</a><a href="/principal/marks.html">Marks</a><a href="/principal/fees.html">Fees</a><a href="/principal/notices.html">Notices</a><a href="#" onclick="logout()">🚪 Logout</a></aside>
+<main class="content"><div class="topbar"><div><h1>Principal Dashboard</h1><p id="welcome"></p></div><span>2026–27</span></div>
+<div class="grid-4"><div class="metric"><strong>1,000+</strong>Students</div><div class="metric"><strong>50+</strong>Teachers</div><div class="metric"><strong>25+</strong>Classes</div><div class="metric"><strong>24×7</strong>Portal</div></div>
+<div class="panel"><h2>Latest Notices</h2><div id="notices">Loading...</div></div></main>
+<script src="/js/auth.js"></script><script>
+const u=requireRole("principal"); if(u){welcome.textContent="Welcome, "+u.name+" • "+u.role;api("/notices").then(d=>notices.innerHTML=d.notices.length?d.notices.map(n=>"<div class='notice-item'><h3>"+esc(n.title)+"</h3><p>"+esc(n.body)+"</p></div>").join(""):"No notices yet").catch(e=>notices.textContent=e.message)}
+</script></body></html>

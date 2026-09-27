@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABC Public School | School Management System</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="brand">
+    <div class="logo">ABC</div>
+    <div><h1>ABC Public School</h1><p>Affiliated to CBSE | School Code: XXXXX</p></div>
+  </div>
+  <button class="menu-btn" onclick="document.querySelector('.nav').classList.toggle('show')">☰</button>
+  <nav class="nav">
+    <a href="#home">Home</a><a href="#about">About</a><a href="#notices">Notices</a>
+    <a href="#contact">Contact</a><button class="login-open" onclick="openLogin()">Login</button>
+  </nav>
+</header>
+
+<section class="hero" id="home">
+  <div class="hero-content">
+    <span class="badge">Welcome to ABC Public School</span>
+    <h2>Learn • Lead • Succeed</h2>
+    <p>A modern school management portal connecting students, parents, teachers and administration.</p>
+    <button class="primary" onclick="openLogin()">Login to Portal</button>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <div class="section-title"><span>OUR SCHOOL</span><h2>About ABC Public School</h2></div>
+  <div class="cards three">
+    <article class="info-card"><div class="icon">🎓</div><h3>Quality Education</h3><p>Student-focused learning with academic and co-curricular development.</p></article>
+    <article class="info-card"><div class="icon">👨‍🏫</div><h3>Experienced Faculty</h3><p>Teachers and staff work together to support every learner.</p></article>
+    <article class="info-card"><div class="icon">💻</div><h3>Digital Campus</h3><p>Attendance, results, fees, notices and school services in one portal.</p></article>
+  </div>
+</section>
+
+<section class="section light" id="notices">
+  <div class="section-title"><span>UPDATES</span><h2>Latest Notices</h2></div>
+  <div id="publicNotices" class="notice-list"><div class="empty">Login to view school notices.</div></div>
+</section>
+
+<section class="stats">
+  <div><strong>10+</strong><span>Departments</span></div>
+  <div><strong>1000+</strong><span>Students</span></div>
+  <div><strong>50+</strong><span>Teachers</span></div>
+  <div><strong>24×7</strong><span>Portal Access</span></div>
+</section>
+
+<section class="section" id="contact">
+  <div class="section-title"><span>CONTACT</span><h2>Get in Touch</h2></div>
+  <div class="contact-grid">
+    <div class="contact-card"><b>📍 Address</b><p>ABC Public School, Your City, India</p></div>
+    <div class="contact-card"><b>☎ Phone</b><p>+91 XXXXX XXXXX</p></div>
+    <div class="contact-card"><b>✉ Email</b><p>info@abcschool.com</p></div>
+  </div>
+</section>
+
+<footer>© 2026 ABC Public School. All Rights Reserved.</footer>
+
+<div class="modal" id="loginModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeLogin()">×</button>
+    <div class="modal-head"><div class="logo small">ABC</div><h2>Portal Login</h2><p>Select your role and enter your credentials.</p></div>
+    <form id="loginForm">
+      <label>Login Role</label>
+      <select id="role" required>
+        <option value="admin">Admin</option><option value="principal">Principal</option>
+        <option value="teacher">Teacher</option><option value="student">Student</option>
+        <option value="parent">Parent / Guardian</option><option value="accountant">Accountant</option>
+        <option value="admission">Admission Officer</option><option value="librarian">Librarian</option>
+        <option value="exam-controller">Exam Controller</option><option value="notice-manager">Notice Manager</option>
+      </select>
+      <label>Email / Login ID</label><input id="email" type="text" required>
+      <label>Password</label><input id="password" type="password" required>
+      <button class="primary full">Login</button>
+      <div id="loginMessage" class="form-message"></div>
+    </form>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

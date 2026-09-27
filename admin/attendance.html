@@ -1,0 +1,5 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance Management</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-shell"><aside class="sidebar"><div class="brand-mini">🏫 ABC School</div><h3>Attendance Management</h3><a href="/admin-dashboard.html">Dashboard</a><a href="#" onclick="logout()">🚪 Logout</a></aside>
+<main class="content"><div class="topbar"><h1>Attendance Management</h1></div><div class="panel"><h2>Attendance Management</h2><p id="status">Checking database...</p></div></main>
+<script src="/js/auth.js"></script><script>requireRole("admin");api("/attendance").then(d=>status.textContent="Connected successfully. Records: "+Object.values(d).find(x=>Array.isArray(x))?.length||"Connected").catch(e=>status.textContent=e.message)</script></body></html>

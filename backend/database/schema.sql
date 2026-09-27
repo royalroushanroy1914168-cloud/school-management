@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS users(
+ id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
+ password TEXT NOT NULL, role TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS students(
+ id SERIAL PRIMARY KEY, admission_no TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+ class_name TEXT, section TEXT, roll_no TEXT, parent_name TEXT, phone TEXT,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS admissions(
+ id SERIAL PRIMARY KEY, application_no TEXT UNIQUE NOT NULL, student_name TEXT NOT NULL,
+ class_name TEXT, parent_name TEXT, phone TEXT, status TEXT DEFAULT 'Pending',
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS notices(
+ id SERIAL PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL,
+ target_role TEXT DEFAULT 'all', published BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS attendance(
+ id SERIAL PRIMARY KEY, student_id INT REFERENCES students(id) ON DELETE CASCADE,
+ attendance_date DATE, status TEXT
+);
+CREATE TABLE IF NOT EXISTS exams(
+ id SERIAL PRIMARY KEY, name TEXT, subject TEXT, class_name TEXT, exam_date DATE
+);
+CREATE TABLE IF NOT EXISTS marks(
+ id SERIAL PRIMARY KEY, student_id INT REFERENCES students(id), exam_id INT REFERENCES exams(id),
+ marks NUMERIC, max_marks NUMERIC DEFAULT 100, published BOOLEAN DEFAULT FALSE
+);
+CREATE TABLE IF NOT EXISTS fees(
+ id SERIAL PRIMARY KEY, student_id INT REFERENCES students(id), amount NUMERIC,
+ paid NUMERIC DEFAULT 0, description TEXT, payment_date DATE
+);
+CREATE TABLE IF NOT EXISTS books(
+ id SERIAL PRIMARY KEY, title TEXT, author TEXT, isbn TEXT, quantity INT DEFAULT 1, available INT DEFAULT 1
+);

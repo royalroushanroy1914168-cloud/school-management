@@ -1,0 +1,9 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-shell"><aside class="sidebar"><div class="brand-mini">🏫 ABC School</div><div class="role-name">Admin Dashboard</div><a href="/admin/admission.html">Admission</a><a href="/admin/students.html">Students</a><a href="/admin/teacher.html">Teachers</a><a href="/admin/principal.html">Principals</a><a href="/admin/exam.html">Exams</a><a href="/admin/attendance.html">Attendance</a><a href="/admin/marks.html">Marks</a><a href="/admin/fees.html">Fees</a><a href="/admin/notices.html">Notices</a><a href="/admin/setting.html">Settings</a><a href="#" onclick="logout()">🚪 Logout</a></aside>
+<main class="content"><div class="topbar"><div><h1>Admin Dashboard</h1><p id="welcome"></p></div><span>2026–27</span></div>
+<div class="grid-4"><div class="metric"><strong>1,000+</strong>Students</div><div class="metric"><strong>50+</strong>Teachers</div><div class="metric"><strong>25+</strong>Classes</div><div class="metric"><strong>24×7</strong>Portal</div></div>
+<div class="panel"><h2>Latest Notices</h2><div id="notices">Loading...</div></div></main>
+<script src="/js/auth.js"></script><script>
+const u=requireRole("admin"); if(u){welcome.textContent="Welcome, "+u.name+" • "+u.role;api("/notices").then(d=>notices.innerHTML=d.notices.length?d.notices.map(n=>"<div class='notice-item'><h3>"+esc(n.title)+"</h3><p>"+esc(n.body)+"</p></div>").join(""):"No notices yet").catch(e=>notices.textContent=e.message)}
+</script></body></html>

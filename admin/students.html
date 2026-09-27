@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Management</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-shell"><aside class="sidebar"><div class="brand-mini">🏫 ABC School</div><h3>Student Management</h3><a href="/admin-dashboard.html">Dashboard</a><a href="#" onclick="logout()">🚪 Logout</a></aside>
+<main class="content"><div class="topbar"><h1>Student Management</h1></div>
+<div class="panel"><form id="form" class="dashboard-form form-grid">
+<input id="admission_no" placeholder="Admission No" required><input id="name" placeholder="Student Name" required>
+<input id="class_name" placeholder="Class"><input id="section" placeholder="Section"><input id="roll_no" placeholder="Roll No"><input id="parent_name" placeholder="Parent Name"><input id="phone" placeholder="Phone">
+<div class="wide"><button class="primary">Add Student</button></div></form><p id="msg"></p></div>
+<div class="panel"><h2>Students</h2><div id="list"></div></div>
+</main>
+<script src="/js/auth.js"></script><script>requireRole("admin");
+async function load(){try{const d=await api("/students");list.innerHTML="<div class='table-wrap'><table><tr><th>Admission No</th><th>Name</th><th>Class</th><th>Section</th><th>Parent</th></tr>"+d.students.map(s=>"<tr><td>"+esc(s.admission_no)+"</td><td>"+esc(s.name)+"</td><td>"+esc(s.class_name)+"</td><td>"+esc(s.section)+"</td><td>"+esc(s.parent_name)+"</td></tr>").join("")+"</table></div>"}catch(e){list.textContent=e.message}}
+form.onsubmit=async e=>{e.preventDefault();try{await api("/students",{method:"POST",body:JSON.stringify({admission_no:admission_no.value,name:name.value,class_name:class_name.value,section:section.value,roll_no:roll_no.value,parent_name:parent_name.value,phone:phone.value})});msg.textContent="Student added";form.reset();load()}catch(x){msg.textContent=x.message}};load();
+</script></body></html>

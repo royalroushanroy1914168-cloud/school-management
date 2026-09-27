@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teacher Account Management</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-shell"><aside class="sidebar"><div class="brand-mini">🏫 ABC School</div><h3>Teacher Account Management</h3><a href="/admin-dashboard.html">Dashboard</a><a href="#" onclick="logout()">🚪 Logout</a></aside>
+<main class="content"><div class="topbar"><h1>Teacher Account Management</h1></div>
+<div class="panel"><form id="form" class="dashboard-form form-grid">
+<input id="name" placeholder="Teacher Name" required><input id="email" type="email" placeholder="Login Email" required>
+<input id="password" type="password" placeholder="Password" required><div><button class="primary">Create Teacher Account</button></div></form><p id="msg"></p></div>
+<div class="panel"><h2>Existing Accounts</h2><div id="list"></div></div>
+</main>
+<script src="/js/auth.js"></script><script>requireRole("admin");
+async function load(){try{const d=await api("/users");list.innerHTML="<div class='table-wrap'><table><tr><th>Name</th><th>Email</th><th>Role</th></tr>"+d.users.filter(u=>u.role==="teacher").map(u=>"<tr><td>"+esc(u.name)+"</td><td>"+esc(u.email)+"</td><td>"+esc(u.role)+"</td></tr>").join("")+"</table></div>"}catch(e){list.textContent=e.message}}
+form.onsubmit=async e=>{e.preventDefault();try{await api("/users",{method:"POST",body:JSON.stringify({name:name.value,email:email.value,password:password.value,role:"teacher"})});msg.textContent="Account created";form.reset();load()}catch(x){msg.textContent=x.message}};load();
+</script></body></html>
