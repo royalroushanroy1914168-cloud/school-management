@@ -95,7 +95,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 role = role.toLowerCase();
 
 
-                // Get email / username
+                // --------------------------------------
+                // GET EMAIL / USERNAME / USER ID
+                // --------------------------------------
+
                 let email = "";
 
                 const emailInput =
@@ -110,7 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
 
-                // Get password
+                // --------------------------------------
+                // GET PASSWORD
+                // --------------------------------------
+
                 const passwordInput =
                     $("#password") ||
                     $("input[type='password']");
@@ -121,7 +127,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         : "";
 
 
-                // Validation
+                // --------------------------------------
+                // VALIDATION
+                // --------------------------------------
+
                 if (!email) {
                     showMessage(
                         "Please enter Admin ID / Email."
@@ -137,7 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
 
-                // Disable login button
+                // --------------------------------------
+                // DISABLE LOGIN BUTTON
+                // --------------------------------------
+
                 const submitButton =
                     loginForm.querySelector(
                         "button[type='submit']"
@@ -173,7 +185,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-                // Read response
+                // --------------------------------------
+                // READ RESPONSE
+                // --------------------------------------
+
                 const data = await response.json();
 
 
@@ -220,8 +235,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     // ADMIN
                     if (role === "admin") {
 
+                        // FIXED PATH
                         window.location.href =
-                            "/admin/admin-dashboard.html";
+                            "/admin-dashboard.html";
 
                     }
 
@@ -484,8 +500,9 @@ function openAdminPage(page) {
 
     const pages = {
 
+        // FIXED PATH
         dashboard:
-            "/admin/admin-dashboard.html",
+            "/admin-dashboard.html",
 
         admission:
             "/admin/admission.html",
