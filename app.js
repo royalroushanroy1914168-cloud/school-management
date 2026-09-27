@@ -2,10 +2,8 @@
 // ABC PUBLIC SCHOOL - FRONTEND APP
 // ==========================================
 
-// Render backend API
 const API = "https://school-management-2-pbpv.onrender.com/api";
 
-// Short selector
 const $ = (selector) => document.querySelector(selector);
 
 
@@ -15,9 +13,9 @@ const $ = (selector) => document.querySelector(selector);
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    // ======================================
+    // --------------------------------------
     // LOGIN MODAL
-    // ======================================
+    // --------------------------------------
 
     const modal = $("#modal");
     const loginBtn = $("#loginBtn");
@@ -35,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    // Close modal by clicking outside
     if (modal) {
         window.onclick = (event) => {
             if (event.target === modal) {
@@ -45,9 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ======================================
+    // --------------------------------------
     // ROLE BUTTONS
-    // ======================================
+    // --------------------------------------
 
     document.querySelectorAll("[data-role]").forEach((button) => {
 
@@ -61,21 +58,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 roleInput.value = role;
             }
 
-            // Remove active class
-            document.querySelectorAll("[data-role]").forEach((btn) => {
-                btn.classList.remove("active");
-            });
+            document
+                .querySelectorAll("[data-role]")
+                .forEach((btn) => {
+                    btn.classList.remove("active");
+                });
 
-            // Add active class
             button.classList.add("active");
         };
 
     });
 
 
-    // ======================================
+    // --------------------------------------
     // LOGIN FORM
-    // ======================================
+    // --------------------------------------
 
     const loginForm = $("#loginForm");
 
@@ -85,13 +82,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
             event.preventDefault();
 
-            let submitButton = null;
+            const submitButton =
+                loginForm.querySelector(
+                    "button[type='submit']"
+                ) ||
+                loginForm.querySelector("button");
 
             try {
 
-                // ==================================
+                // --------------------------------------
                 // GET ROLE
-                // ==================================
+                // --------------------------------------
 
                 const roleInput = $("#role");
 
@@ -102,11 +103,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 role = role.toLowerCase().trim();
 
 
-                // ==================================
-                // GET EMAIL / USERNAME / ID
-                // ==================================
-
-                let email = "";
+                // --------------------------------------
+                // GET EMAIL / USERNAME
+                // --------------------------------------
 
                 const emailInput =
                     $("#email") ||
@@ -115,70 +114,56 @@ document.addEventListener("DOMContentLoaded", () => {
                     $("#userid") ||
                     $("input[type='email']");
 
-                if (emailInput) {
-                    email = emailInput.value.trim();
-                }
+                const email = emailInput
+                    ? emailInput.value.trim()
+                    : "";
 
 
-                // ==================================
+                // --------------------------------------
                 // GET PASSWORD
-                // ==================================
+                // --------------------------------------
 
                 const passwordInput =
                     $("#password") ||
                     $("input[type='password']");
 
-                const password =
-                    passwordInput
-                        ? passwordInput.value
-                        : "";
+                const password = passwordInput
+                    ? passwordInput.value
+                    : "";
 
 
-                // ==================================
+                // --------------------------------------
                 // VALIDATION
-                // ==================================
+                // --------------------------------------
 
                 if (!email) {
-
                     showMessage(
                         "Please enter Admin ID / Email."
                     );
-
                     return;
                 }
 
                 if (!password) {
-
                     showMessage(
                         "Please enter your password."
                     );
-
                     return;
                 }
 
 
-                // ==================================
-                // LOGIN BUTTON
-                // ==================================
-
-                submitButton =
-                    loginForm.querySelector(
-                        "button[type='submit']"
-                    ) ||
-                    loginForm.querySelector("button");
+                // --------------------------------------
+                // DISABLE LOGIN BUTTON
+                // --------------------------------------
 
                 if (submitButton) {
-
                     submitButton.disabled = true;
-
-                    submitButton.textContent =
-                        "Logging in...";
+                    submitButton.textContent = "Logging in...";
                 }
 
 
-                // ==================================
-                // LOGIN API
-                // ==================================
+                // --------------------------------------
+                // CALL RENDER BACKEND
+                // --------------------------------------
 
                 const response = await fetch(
                     API + "/login",
@@ -186,47 +171,36 @@ document.addEventListener("DOMContentLoaded", () => {
                         method: "POST",
 
                         headers: {
-                            "Content-Type":
-                                "application/json"
+                            "Content-Type": "application/json"
                         },
 
                         body: JSON.stringify({
-
                             email: email,
-
                             password: password,
-
                             role: role
-
                         })
                     }
                 );
 
 
-                // ==================================
+                // --------------------------------------
                 // READ RESPONSE
-                // ==================================
+                // --------------------------------------
 
-                let data = {};
+                let data;
 
                 try {
-
                     data = await response.json();
-
-                } catch (jsonError) {
-
-                    data = {
-                        success: false,
-                        message:
-                            "Invalid response from server."
-                    };
-
+                } catch (error) {
+                    throw new Error(
+                        "Invalid response from server."
+                    );
                 }
 
 
-                // ==================================
+                // --------------------------------------
                 // LOGIN FAILED
-                // ==================================
+                // --------------------------------------
 
                 if (!response.ok || !data.success) {
 
@@ -236,39 +210,39 @@ document.addEventListener("DOMContentLoaded", () => {
                     );
 
                     if (submitButton) {
-
                         submitButton.disabled = false;
-
-                        submitButton.textContent =
-                            "Login";
+                        submitButton.textContent = "Login";
                     }
 
                     return;
                 }
 
 
-                // ==================================
-                // LOGIN SUCCESS
-                // ==================================
+                // --------------------------------------
+                // LOGIN SUCCESSFUL
+                // --------------------------------------
 
-                if (data.user) {
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(data.user)
+                );
 
+                // Also save token if backend provides one
+                if (data.token) {
                     localStorage.setItem(
-                        "user",
-                        JSON.stringify(data.user)
+                        "token",
+                        data.token
                     );
-
                 }
-
 
                 showMessage(
                     "Login successful!"
                 );
 
 
-                // ==================================
-                // REDIRECT BY ROLE
-                // ==================================
+                // --------------------------------------
+                // REDIRECT ACCORDING TO ROLE
+                // --------------------------------------
 
                 setTimeout(() => {
 
@@ -304,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     }
 
-                    // PARENT
+                    // PARENT / GUARDIAN
                     else if (
                         role === "parent" ||
                         role === "guardian"
@@ -325,7 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // ADMISSION OFFICER
                     else if (
-                        role === "admission" ||
+                        role === "admission officer" ||
                         role === "admission_officer"
                     ) {
 
@@ -344,8 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // EXAM CONTROLLER
                     else if (
-                        role === "exam_controller" ||
-                        role === "examcontroller"
+                        role === "exam controller" ||
+                        role === "exam_controller"
                     ) {
 
                         window.location.href =
@@ -355,8 +329,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // NOTICE MANAGER
                     else if (
-                        role === "notice_manager" ||
-                        role === "noticemanager"
+                        role === "notice manager" ||
+                        role === "notice_manager"
                     ) {
 
                         window.location.href =
@@ -376,10 +350,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             }
 
-
-            // ==================================
-            // SERVER / NETWORK ERROR
-            // ==================================
+            // --------------------------------------
+            // NETWORK / SERVER ERROR
+            // --------------------------------------
 
             catch (error) {
 
@@ -389,15 +362,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
                 showMessage(
+                    error.message ||
                     "Unable to connect to the server. Please try again."
                 );
 
                 if (submitButton) {
-
                     submitButton.disabled = false;
-
-                    submitButton.textContent =
-                        "Login";
+                    submitButton.textContent = "Login";
                 }
 
             }
@@ -407,9 +378,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ======================================
+    // --------------------------------------
     // LOAD NOTICES
-    // ======================================
+    // --------------------------------------
 
     loadNotices();
 
@@ -428,46 +399,29 @@ function showMessage(message) {
         $(".login-message");
 
 
-    // Create message box if missing
     if (!messageBox) {
 
         messageBox =
             document.createElement("div");
 
-        messageBox.id =
-            "loginMessage";
+        messageBox.id = "loginMessage";
 
-        messageBox.style.marginTop =
-            "15px";
+        messageBox.style.marginTop = "15px";
+        messageBox.style.padding = "10px";
+        messageBox.style.textAlign = "center";
+        messageBox.style.borderRadius = "6px";
 
-        messageBox.style.padding =
-            "10px";
-
-        messageBox.style.textAlign =
-            "center";
-
-        messageBox.style.borderRadius =
-            "6px";
-
-        const loginForm =
-            $("#loginForm");
+        const loginForm = $("#loginForm");
 
         if (loginForm) {
-
-            loginForm.appendChild(
-                messageBox
-            );
-
+            loginForm.appendChild(messageBox);
         }
 
     }
 
 
     if (messageBox) {
-
-        messageBox.textContent =
-            message;
-
+        messageBox.textContent = message;
     }
 
 }
@@ -483,21 +437,17 @@ async function loadNotices() {
 
         const response =
             await fetch(
-                API +
-                "/notices?published=true"
+                API + "/notices?published=true"
             );
-
 
         if (!response.ok) {
             return;
         }
 
-
         const data =
             await response.json();
 
 
-        // Find notice container
         const noticeContainer =
             $("#notices") ||
             $("#noticeList") ||
@@ -509,12 +459,9 @@ async function loadNotices() {
         }
 
 
-        // Clear old notices
-        noticeContainer.innerHTML =
-            "";
+        noticeContainer.innerHTML = "";
 
 
-        // Get notices
         const notices =
             data.notices ||
             data.data ||
@@ -526,8 +473,7 @@ async function loadNotices() {
             const div =
                 document.createElement("div");
 
-            div.className =
-                "notice";
+            div.className = "notice";
 
 
             const title =
@@ -549,7 +495,6 @@ async function loadNotices() {
 
 
             div.appendChild(title);
-
             div.appendChild(text);
 
             noticeContainer.appendChild(div);
@@ -576,12 +521,10 @@ async function loadNotices() {
 
 function logout() {
 
-    localStorage.removeItem(
-        "user"
-    );
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
 
-    window.location.href =
-        "/";
+    window.location.href = "/";
 
 }
 
@@ -593,15 +536,11 @@ function logout() {
 function getCurrentUser() {
 
     const user =
-        localStorage.getItem(
-            "user"
-        );
-
+        localStorage.getItem("user");
 
     if (!user) {
         return null;
     }
-
 
     try {
 
@@ -611,9 +550,7 @@ function getCurrentUser() {
 
     catch (error) {
 
-        localStorage.removeItem(
-            "user"
-        );
+        localStorage.removeItem("user");
 
         return null;
 
@@ -631,11 +568,10 @@ function openAdminPage(page) {
     const pages = {
 
         // IMPORTANT:
-        // Dashboard is in ROOT directory
+        // Dashboard is in ROOT, not /admin/
         dashboard:
             "/admin-dashboard.html",
 
-        // Admin pages are inside /admin/
         admission:
             "/admin/admission.html",
 
@@ -648,11 +584,11 @@ function openAdminPage(page) {
         principal:
             "/admin/principal.html",
 
-        exam:
-            "/admin/exam.html",
-
         attendance:
             "/admin/attendance.html",
+
+        exam:
+            "/admin/exam.html",
 
         marks:
             "/admin/marks.html",
@@ -674,9 +610,7 @@ function openAdminPage(page) {
         window.location.href =
             pages[page];
 
-    }
-
-    else {
+    } else {
 
         console.error(
             "Unknown admin page:",
@@ -709,9 +643,7 @@ document.addEventListener(
                         const page =
                             button.dataset.adminPage;
 
-                        openAdminPage(
-                            page
-                        );
+                        openAdminPage(page);
 
                     }
                 );
