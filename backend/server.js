@@ -18,31 +18,24 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-
 /* =========================================================
    FRONTEND PATH
-   server.js is in the project root
+   server.js is inside backend folder
 ========================================================= */
 
 const frontendPath = path.join(__dirname, "..");
-
 
 /* =========================================================
    STATIC FILES
 ========================================================= */
 
-// Main frontend files
 app.use(express.static(frontendPath));
 
-// CSS folder
 app.use("/css", express.static(path.join(frontendPath, "css")));
 
-// JS folder
 app.use("/js", express.static(path.join(frontendPath, "js")));
 
-// Admin folder
 app.use("/admin", express.static(path.join(frontendPath, "admin")));
-
 
 /* =========================================================
    POSTGRESQL DATABASE
@@ -51,7 +44,6 @@ app.use("/admin", express.static(path.join(frontendPath, "admin")));
 let pool = null;
 
 if (process.env.DATABASE_URL) {
-
     pool = new Pool({
         connectionString: process.env.DATABASE_URL,
 
@@ -63,26 +55,19 @@ if (process.env.DATABASE_URL) {
     pool.on("error", (err) => {
         console.error("PostgreSQL error:", err);
     });
-
 } else {
-
     console.log("DATABASE_URL is not configured.");
-
 }
-
 
 /* =========================================================
    HOME PAGE
 ========================================================= */
 
 app.get("/", (req, res) => {
-
     res.sendFile(
         path.join(frontendPath, "index.html")
     );
-
 });
-
 
 /* =========================================================
    HEALTH CHECK
@@ -105,23 +90,15 @@ app.get("/api/health", async (req, res) => {
             console.error(error);
 
             databaseStatus = "PostgreSQL connection failed";
-
         }
-
     }
 
     res.json({
-
         success: true,
-
         message: "ABC Public School API is running",
-
         database: databaseStatus
-
     });
-
 });
-
 
 /* =========================================================
    DATABASE CHECK
@@ -132,13 +109,9 @@ app.get("/api/database", async (req, res) => {
     if (!pool) {
 
         return res.status(500).json({
-
             success: false,
-
             message: "DATABASE_URL is not configured"
-
         });
-
     }
 
     try {
@@ -148,13 +121,9 @@ app.get("/api/database", async (req, res) => {
         );
 
         res.json({
-
             success: true,
-
             message: "PostgreSQL database connected",
-
             time: result.rows[0].now
-
         });
 
     } catch (error) {
@@ -162,17 +131,11 @@ app.get("/api/database", async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-
             success: false,
-
             message: "Database connection failed"
-
         });
-
     }
-
 });
-
 
 /* =========================================================
    DATABASE SETUP
@@ -185,7 +148,6 @@ async function setupDatabase() {
         console.log("Database not configured.");
 
         return;
-
     }
 
     await pool.query(`
@@ -209,9 +171,7 @@ async function setupDatabase() {
     `);
 
     console.log("Users table is ready.");
-
 }
-
 
 /* =========================================================
    MANUAL DATABASE SETUP
@@ -222,13 +182,9 @@ app.get("/api/setup", async (req, res) => {
     if (!pool) {
 
         return res.status(500).json({
-
             success: false,
-
             message: "DATABASE_URL is not configured"
-
         });
-
     }
 
     try {
@@ -236,11 +192,8 @@ app.get("/api/setup", async (req, res) => {
         await setupDatabase();
 
         res.json({
-
             success: true,
-
             message: "Users table is ready"
-
         });
 
     } catch (error) {
@@ -248,17 +201,11 @@ app.get("/api/setup", async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-
             success: false,
-
             message: "Could not create table"
-
         });
-
     }
-
 });
-
 
 /* =========================================================
    CREATE PERMANENT ADMIN
@@ -276,7 +223,6 @@ async function ensureAdmin() {
         const adminPassword =
             process.env.ADMIN_PASSWORD;
 
-
         if (!adminEmail || !adminPassword) {
 
             console.log(
@@ -284,9 +230,7 @@ async function ensureAdmin() {
             );
 
             return;
-
         }
-
 
         const existingAdmin =
             await pool.query(`
@@ -301,7 +245,6 @@ async function ensureAdmin() {
 
             `);
 
-
         if (existingAdmin.rows.length === 0) {
 
             const hashedPassword =
@@ -309,7 +252,6 @@ async function ensureAdmin() {
                     adminPassword,
                     12
                 );
-
 
             await pool.query(`
 
@@ -330,7 +272,6 @@ async function ensureAdmin() {
 
             ]);
 
-
             console.log(
                 "Permanent Admin account created."
             );
@@ -340,7 +281,6 @@ async function ensureAdmin() {
             console.log(
                 "Admin account already exists."
             );
-
         }
 
     } catch (error) {
@@ -349,11 +289,8 @@ async function ensureAdmin() {
             "Admin setup error:",
             error
         );
-
     }
-
 }
-
 
 /* =========================================================
    LOGIN
@@ -364,13 +301,9 @@ app.post("/api/login", async (req, res) => {
     if (!pool) {
 
         return res.status(500).json({
-
             success: false,
-
             message: "Database not configured"
-
         });
-
     }
 
     try {
@@ -381,20 +314,14 @@ app.post("/api/login", async (req, res) => {
             role
         } = req.body;
 
-
         if (!email || !password || !role) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Email, password and role are required"
-
             });
-
         }
-
 
         const result = await pool.query(`
 
@@ -418,23 +345,16 @@ app.post("/api/login", async (req, res) => {
 
         ]);
 
-
         if (result.rows.length === 0) {
 
             return res.status(401).json({
-
                 success: false,
-
                 message:
                     "Invalid email, password or role"
-
             });
-
         }
 
-
         const user = result.rows[0];
-
 
         const passwordMatch =
             await bcrypt.compare(
@@ -442,20 +362,14 @@ app.post("/api/login", async (req, res) => {
                 user.password
             );
 
-
         if (!passwordMatch) {
 
             return res.status(401).json({
-
                 success: false,
-
                 message:
                     "Invalid email, password or role"
-
             });
-
         }
-
 
         res.json({
 
@@ -472,7 +386,6 @@ app.post("/api/login", async (req, res) => {
                 email: user.email,
 
                 role: user.role
-
             }
 
         });
@@ -484,19 +397,12 @@ app.post("/api/login", async (req, res) => {
             error
         );
 
-
         res.status(500).json({
-
             success: false,
-
             message: "Login failed"
-
         });
-
     }
-
 });
-
 
 /* =========================================================
    ADMIN CHANGE CREDENTIALS
@@ -509,14 +415,10 @@ app.put(
         if (!pool) {
 
             return res.status(500).json({
-
                 success: false,
-
                 message:
                     "Database not configured"
-
             });
-
         }
 
         try {
@@ -528,7 +430,6 @@ app.put(
                 newPassword
             } = req.body;
 
-
             if (
                 !oldEmail ||
                 !oldPassword ||
@@ -537,16 +438,11 @@ app.put(
             ) {
 
                 return res.status(400).json({
-
                     success: false,
-
                     message:
                         "All fields are required"
-
                 });
-
             }
-
 
             const result =
                 await pool.query(`
@@ -567,23 +463,16 @@ app.put(
 
                 ]);
 
-
             if (result.rows.length === 0) {
 
                 return res.status(401).json({
-
                     success: false,
-
                     message:
                         "Current Admin ID is incorrect"
-
                 });
-
             }
 
-
             const admin = result.rows[0];
-
 
             const passwordMatch =
                 await bcrypt.compare(
@@ -591,27 +480,20 @@ app.put(
                     admin.password
                 );
 
-
             if (!passwordMatch) {
 
                 return res.status(401).json({
-
                     success: false,
-
                     message:
                         "Current Admin password is incorrect"
-
                 });
-
             }
-
 
             const hashedPassword =
                 await bcrypt.hash(
                     newPassword,
                     12
                 );
-
 
             await pool.query(`
 
@@ -633,7 +515,6 @@ app.put(
 
             ]);
 
-
             res.json({
 
                 success: true,
@@ -650,21 +531,14 @@ app.put(
                 error
             );
 
-
             res.status(500).json({
-
                 success: false,
-
                 message:
                     "Could not change Admin credentials"
-
             });
-
         }
-
     }
 );
-
 
 /* =========================================================
    CREATE USER
@@ -675,14 +549,10 @@ app.post("/api/users", async (req, res) => {
     if (!pool) {
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 "Database not configured"
-
         });
-
     }
 
     try {
@@ -694,7 +564,6 @@ app.post("/api/users", async (req, res) => {
             role
         } = req.body;
 
-
         if (
             !name ||
             !email ||
@@ -703,23 +572,17 @@ app.post("/api/users", async (req, res) => {
         ) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Name, email, password and role are required"
-
             });
-
         }
-
 
         const hashedPassword =
             await bcrypt.hash(
                 password,
                 12
             );
-
 
         const result =
             await pool.query(`
@@ -748,7 +611,6 @@ app.post("/api/users", async (req, res) => {
 
             ]);
 
-
         res.status(201).json({
 
             success: true,
@@ -765,18 +627,12 @@ app.post("/api/users", async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-
             success: false,
-
             message:
                 "Could not create user"
-
         });
-
     }
-
 });
-
 
 /* =========================================================
    GET USERS
@@ -787,14 +643,10 @@ app.get("/api/users", async (req, res) => {
     if (!pool) {
 
         return res.status(500).json({
-
             success: false,
-
             message:
                 "Database not configured"
-
         });
-
     }
 
     try {
@@ -815,7 +667,6 @@ app.get("/api/users", async (req, res) => {
 
             `);
 
-
         res.json({
 
             success: true,
@@ -829,47 +680,22 @@ app.get("/api/users", async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-
             success: false,
-
             message:
                 "Could not fetch users"
-
         });
-
     }
-
 });
 
-
 /* =========================================================
-   ADMIN PAGES
-========================================================= */
-
-/*
    ADMIN DASHBOARD
-
-   /admin
-   /admin/
-   /admin/index.html
-   /admin/admin-dashboard.html
-*/
+========================================================= */
 
 app.get(
     [
         "/admin",
         "/admin/",
         "/admin/admin-dashboard.html"
-       "admin-admission.html"
-               "admin/teacher.html"
-       "admin/teacher.html"
-       "admin/students.html"
-       "admin/principal.html"
-       "admin/attendance.html"
-       "admin/exam.html"
-       "/admin/marks.html"
-       "/admin/notices.html"
-       "/admin/setting.html"
     ],
     (req, res) => {
 
@@ -878,32 +704,15 @@ app.get(
                 frontendPath,
                 "admin",
                 "admin-dashboard.html"
-             
             )
         );
 
     }
 );
 
-/*
-"/admin/students.html">Students</a>
-<a href="/admin/teacher.html">Teachers</a>
-<a href="/admin/principal.html">Principals</a>
-<a href="/admin/attendance.html">Attendance</a>
-<a href="/admin/exam.html">Exams</a>
-<a href="/admin/fees.html">Fees</a>
-<a href="/admin/marks.html">Marks</a>
-<a href="/admin/notices.html">Notices</a>
-<a href="/admin/setting.html">Settings</a>
 /* =========================================================
    ADMISSION PAGE
 ========================================================= */
-
-/*
-   IMPORTANT:
-   File name is admission.html
-   NOT addmission.html
-*/
 
 app.get(
     "/admin/admission.html",
@@ -919,7 +728,6 @@ app.get(
 
     }
 );
-
 
 /* =========================================================
    STUDENTS
@@ -940,7 +748,6 @@ app.get(
     }
 );
 
-
 /* =========================================================
    TEACHER
 ========================================================= */
@@ -959,7 +766,6 @@ app.get(
 
     }
 );
-
 
 /* =========================================================
    PRINCIPAL
@@ -980,7 +786,6 @@ app.get(
     }
 );
 
-
 /* =========================================================
    EXAM
 ========================================================= */
@@ -999,7 +804,6 @@ app.get(
 
     }
 );
-
 
 /* =========================================================
    ATTENDANCE
@@ -1020,7 +824,6 @@ app.get(
     }
 );
 
-
 /* =========================================================
    MARKS
 ========================================================= */
@@ -1039,7 +842,6 @@ app.get(
 
     }
 );
-
 
 /* =========================================================
    FEES
@@ -1060,7 +862,6 @@ app.get(
     }
 );
 
-
 /* =========================================================
    NOTICES
 ========================================================= */
@@ -1079,7 +880,6 @@ app.get(
 
     }
 );
-
 
 /* =========================================================
    SETTINGS
@@ -1100,7 +900,6 @@ app.get(
     }
 );
 
-
 /* =========================================================
    API 404
 ========================================================= */
@@ -1117,7 +916,6 @@ app.use("/api", (req, res) => {
     });
 
 });
-
 
 /* =========================================================
    PAGE 404
@@ -1179,7 +977,6 @@ app.use((req, res) => {
 
 });
 
-
 /* =========================================================
    START SERVER
 ========================================================= */
@@ -1191,7 +988,6 @@ async function startServer() {
         await setupDatabase();
 
         await ensureAdmin();
-
 
         app.listen(
             PORT,
@@ -1217,6 +1013,5 @@ async function startServer() {
     }
 
 }
-
 
 startServer();
