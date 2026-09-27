@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
    server.js is in the project root
 ========================================================= */
 
-const frontendPath = __dirname;
+const frontendPath = path.join(__dirname, "..");
 
 
 /* =========================================================
