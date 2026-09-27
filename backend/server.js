@@ -12,6 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ===============================
+// FRONTEND PATH
+// ===============================
+
 const frontendPath = path.join(__dirname, "..");
 
 app.use(express.static(frontendPath));
@@ -43,10 +47,6 @@ if (process.env.DATABASE_URL) {
 // ===============================
 // FRONTEND
 // ===============================
-
-const frontendPath = path.join(__dirname, "..");
-
-app.use(express.static(frontendPath));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(frontendPath, "index.html"));
@@ -173,7 +173,9 @@ async function ensureAdmin() {
         const adminPassword = process.env.ADMIN_PASSWORD;
 
         if (!adminEmail || !adminPassword) {
-            console.log("ADMIN_EMAIL or ADMIN_PASSWORD is not configured.");
+            console.log(
+                "ADMIN_EMAIL or ADMIN_PASSWORD is not configured."
+            );
             return;
         }
 
@@ -183,7 +185,10 @@ async function ensureAdmin() {
 
         if (existingAdmin.rows.length === 0) {
 
-            const hashedPassword = await bcrypt.hash(adminPassword, 12);
+            const hashedPassword = await bcrypt.hash(
+                adminPassword,
+                12
+            );
 
             await pool.query(
                 `
@@ -200,6 +205,7 @@ async function ensureAdmin() {
             );
 
             console.log("Permanent Admin account created.");
+
         } else {
             console.log("Admin account already exists.");
         }
@@ -303,7 +309,12 @@ app.put("/api/admin/change-credentials", async (req, res) => {
             newPassword
         } = req.body;
 
-        if (!oldEmail || !oldPassword || !newEmail || !newPassword) {
+        if (
+            !oldEmail ||
+            !oldPassword ||
+            !newEmail ||
+            !newPassword
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
@@ -341,7 +352,10 @@ app.put("/api/admin/change-credentials", async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        const hashedPassword = await bcrypt.hash(
+            newPassword,
+            12
+        );
 
         await pool.query(
             `
@@ -385,7 +399,12 @@ app.post("/api/users", async (req, res) => {
     }
 
     try {
-        const { name, email, password, role } = req.body;
+        const {
+            name,
+            email,
+            password,
+            role
+        } = req.body;
 
         if (!name || !email || !password || !role) {
             return res.status(400).json({
@@ -394,7 +413,10 @@ app.post("/api/users", async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 12);
+        const hashedPassword = await bcrypt.hash(
+            password,
+            12
+        );
 
         const result = await pool.query(
             `
@@ -462,7 +484,7 @@ app.get("/api/users", async (req, res) => {
 });
 
 // ===============================
-// 404
+// API 404
 // ===============================
 
 app.use("/api", (req, res) => {
@@ -544,7 +566,6 @@ app.get("/admin/setting.html", (req, res) => {
         path.join(frontendPath, "admin", "setting.html")
     );
 });
-
 
 // ===============================
 // START SERVER
