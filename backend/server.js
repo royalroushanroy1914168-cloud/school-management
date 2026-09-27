@@ -859,17 +859,8 @@ app.get(
     [
         "/admin",
         "/admin/",
-        "/admin/index.html",
         "/admin/admin-dashboard.html"
-    ],
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                frontendPath,
-                "admin",
-                "admin-dashboard.html"
-               "admin-admission.html"
+       "admin-admission.html"
                "admin/teacher.html"
        "admin/teacher.html"
        "admin/students.html"
@@ -879,6 +870,15 @@ app.get(
        "/admin/marks.html"
        "/admin/notices.html"
        "/admin/setting.html"
+    ],
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                frontendPath,
+                "admin",
+                "admin-dashboard.html"
+             
             )
         );
 
