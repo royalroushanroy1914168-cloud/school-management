@@ -465,23 +465,77 @@ app.use("/api", (req, res) => {
     });
 });
 
-// ======================================
-// DASHBOARD PAGE ROUTES
-// ======================================
+// ==========================================
+// ADMIN DASHBOARD PAGE ROUTES
+// ==========================================
 
-// ADMIN
-app.get(["/admin", "/admin/", "/admin/index.html"], (req, res) => {
-    res.sendFile(path.join(frontendPath, "admin-dashboard.html"));
+app.get(
+    ["/admin", "/admin/", "/admin/index.html"],
+    (req, res) => {
+        res.sendFile(
+            path.join(frontendPath, "admin-dashboard.html")
+        );
+    }
+);
+
+app.get("/admin/admission.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "admission.html")
+    );
 });
 
-// PRINCIPAL
-app.get(["/principal", "/principal/", "/principal/index.html"], (req, res) => {
-    res.sendFile(path.join(frontendPath, "principal-dashboard.html"));
+app.get("/admin/students.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "students.html")
+    );
 });
 
-// TEACHER
-app.get(["/teacher", "/teacher/", "/teacher/index.html"], (req, res) => {
-    res.sendFile(path.join(frontendPath, "teacher-dashboard.html"));
+app.get("/admin/teacher.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "teacher.html")
+    );
+});
+
+app.get("/admin/principal.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "principal.html")
+    );
+});
+
+app.get("/admin/exam.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "exam.html")
+    );
+});
+
+app.get("/admin/attendance.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "attendance.html")
+    );
+});
+
+app.get("/admin/marks.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "marks.html")
+    );
+});
+
+app.get("/admin/fees.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "fees.html")
+    );
+});
+
+app.get("/admin/notices.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "notices.html")
+    );
+});
+
+app.get("/admin/setting.html", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "admin", "setting.html")
+    );
 });
 
 
